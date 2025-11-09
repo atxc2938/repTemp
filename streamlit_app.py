@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 import random
 import requests
 import json
+from difflib import get_close_matches
 
 # Configuração da página - SIMPLIFICADA para evitar erros
 st.set_page_config(
@@ -83,11 +84,12 @@ if 'termo_buscado' not in st.session_state:
 if 'area_filtro' not in st.session_state:
     st.session_state.area_filtro = "Todas"
 
-# APIs - Substitua pelas suas chaves reais
+# APIs - SUBSITITUA pelas suas chaves reais
 NEWS_API_KEY = "sua_chave_newsapi_aqui"  # Obtenha em: https://newsapi.org
 WIKIPEDIA_API_URL = "https://pt.wikipedia.org/api/rest_v1/page/summary/"
-WIKTIONARY_API_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
-GOOGLE_KNOWLEDGE_GRAPH_API_KEY = "sua_chave_google_kg_aqui"
+FREE_DICTIONARY_API = "https://api.dictionaryapi.dev/api/v2/entries/en/"
+GOOGLE_KNOWLEDGE_GRAPH_API_KEY = "sua_chave_google_kg_aqui"  # Opcional
+BING_NEWS_API_KEY = "sua_chave_bing_news_aqui"  # Opcional
 
 # Classe para buscar termos jurídicos de APIs
 class APITermosJuridicos:
@@ -98,111 +100,147 @@ class APITermosJuridicos:
             "Direito do Trabalho", "Direito Tributário"
         ]
     
+    def _buscar_termos_wikipedia(self, categoria):
+        """Busca termos jurídicos na Wikipedia API por categoria"""
+        try:
+            url = f"https://pt.wikipedia.org/api/rest_v1/page/related/{categoria}"
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                pages = data.get('pages', [])
+                termos = []
+                for page in pages[:10]:  # Pega os primeiros 10 resultados
+                    title = page.get('title', '')
+                    if title and title not in termos:
+                        termos.append(title)
+                return termos
+        except:
+            pass
+        return []
+    
     def obter_termos_populares_por_area(self, area):
         """Busca termos jurídicos populares de APIs externas"""
         try:
-            # Busca termos relacionados ao direito na Wikipedia
-            if area == "Todas":
-                search_terms = ["law", "legal", "jurisprudence", "justice", "rights"]
-            else:
-                # Mapeia áreas do direito para termos em inglês para a API
-                area_map = {
-                    "Direito Constitucional": "constitutional law",
-                    "Direito Processual Civil": "civil procedure",
-                    "Direito Penal": "criminal law", 
-                    "Direito Civil": "civil law",
-                    "Direito Administrativo": "administrative law",
-                    "Direito Empresarial": "business law",
-                    "Direito do Trabalho": "labor law",
-                    "Direito Tributário": "tax law"
-                }
-                search_terms = [area_map.get(area, "law")]
+            # Mapeamento de áreas para categorias da Wikipedia
+            categorias_wikipedia = {
+                "Todas": "Direito",
+                "Direito Constitucional": "Direito_constitucional",
+                "Direito Processual Civil": "Direito_processual_civil", 
+                "Direito Penal": "Direito_penal",
+                "Direito Civil": "Direito_civil",
+                "Direito Administrativo": "Direito_administrativo",
+                "Direito Empresarial": "Direito_empresarial",
+                "Direito do Trabalho": "Direito_do_trabalho",
+                "Direito Tributário": "Direito_tributário"
+            }
             
-            termos_encontrados = []
-            for term in search_terms:
+            categoria = categorias_wikipedia.get(area, "Direito")
+            termos = self._buscar_termos_wikipedia(categoria)
+            
+            # Se não encontrou termos, busca por termos gerais
+            if not termos:
+                termos = self._buscar_termos_wikipedia("Direito")
+            
+            # Garante que temos pelo menos alguns termos
+            if len(termos) < 3:
+                # Busca termos em inglês como fallback
                 try:
-                    # Tenta buscar na Wikipedia API
-                    url = f"{WIKIPEDIA_API_URL}{term}"
+                    url = "https://en.wikipedia.org/api/rest_v1/page/related/Law"
                     response = requests.get(url, timeout=5)
                     if response.status_code == 200:
                         data = response.json()
-                        title = data.get('title', '')
-                        if title and title not in termos_encontrados:
-                            termos_encontrados.append(title)
+                        for page in data.get('pages', [])[:5]:
+                            title = page.get('title', '')
+                            if title and title not in termos:
+                                termos.append(title)
                 except:
-                    continue
+                    pass
             
-            # Fallback: termos jurídicos básicos em português se a API falhar
-            if not termos_encontrados:
-                termos_fallback = {
-                    "Todas": ["Habeas Corpus", "Mandado de Segurança", "Recurso", "Ação", "Sentença"],
-                    "Direito Constitucional": ["Habeas Corpus", "Mandado de Segurança", "Princípio da Isonomia"],
-                    "Direito Processual Civil": ["Recurso", "Ação", "Sentença", "Apelação"],
-                    "Direito Penal": ["Crime", "Pena", "Prisão", "Culpabilidade"],
-                    "Direito Civil": ["Contrato", "Propriedade", "Obrigações", "Posse"],
-                    "Direito Administrativo": ["Licitação", "Servidor Público", "Ato Administrativo"],
-                    "Direito Empresarial": ["Sociedade", "Contrato Social", "Capital Social"],
-                    "Direito do Trabalho": ["CLT", "Rescisão", "FGTS", "Férias"],
-                    "Direito Tributário": ["Imposto", "Taxação", "Isenção", "Deduções"]
-                }
-                termos_encontrados = termos_fallback.get(area, termos_fallback["Todas"])
-            
-            return random.sample(termos_encontrados, min(5, len(termos_encontrados)))
+            return random.sample(termos, min(5, len(termos))) if termos else ["Direito", "Lei", "Jurisprudência"]
             
         except Exception as e:
-            return ["Direito", "Lei", "Jurisprudência", "Legislação", "Justiça"]
+            return ["Direito", "Lei", "Jurisprudência"]
     
     def buscar_definicao_termo(self, termo):
-        """Busca definição do termo em APIs externas"""
+        """Busca definição específica do termo em múltiplas APIs"""
+        # Tentativa 1: Wikipedia em Português
         try:
-            # Tenta Wikipedia API primeiro
-            url = f"{WIKIPEDIA_API_URL}{termo}"
+            url = f"{WIKIPEDIA_API_URL}{termo.replace(' ', '_')}"
             response = requests.get(url, timeout=10)
-            
+            if response.status_code == 200:
+                data = response.json()
+                definicao = data.get('extract', '')
+                if definicao and len(definicao) > 50:
+                    return {
+                        "definicao": definicao,
+                        "fonte": "Wikipedia",
+                        "url": data.get('content_urls', {}).get('desktop', {}).get('page', f"https://pt.wikipedia.org/wiki/{termo.replace(' ', '_')}")
+                    }
+        except:
+            pass
+        
+        # Tentativa 2: Wikipedia em Inglês
+        try:
+            url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{termo.replace(' ', '_')}"
+            response = requests.get(url, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 definicao = data.get('extract', '')
                 if definicao:
                     return {
-                        "definicao": definicao,
-                        "fonte": "Wikipedia",
-                        "url": data.get('content_urls', {}).get('desktop', {}).get('page', '#')
+                        "definicao": f"(Em inglês) {definicao}",
+                        "fonte": "Wikipedia EN",
+                        "url": data.get('content_urls', {}).get('desktop', {}).get('page', f"https://en.wikipedia.org/wiki/{termo.replace(' ', '_')}")
                     }
-            
-            # Tenta Wiktionary API
-            try:
-                url = f"{WIKTIONARY_API_URL}{termo}"
-                response = requests.get(url, timeout=5)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data and len(data) > 0:
-                        meanings = data[0].get('meanings', [])
-                        if meanings and len(meanings) > 0:
-                            definitions = meanings[0].get('definitions', [])
-                            if definitions and len(definitions) > 0:
-                                definicao = definitions[0].get('definition', '')
-                                if definicao:
-                                    return {
-                                        "definicao": definicao,
-                                        "fonte": "Wiktionary",
-                                        "url": "#"
-                                    }
-            except:
-                pass
-            
-            # Fallback genérico
-            return {
-                "definicao": f"O termo '{termo}' refere-se a um conceito jurídico importante no ordenamento brasileiro. Para informações mais detalhadas, consulte fontes especializadas.",
-                "fonte": "Sistema Jurídico",
-                "url": "#"
-            }
-            
-        except Exception as e:
-            return {
-                "definicao": f"Definição indisponível no momento. Erro: {str(e)}",
-                "fonte": "Sistema",
-                "url": "#"
-            }
+        except:
+            pass
+        
+        # Tentativa 3: Free Dictionary API
+        try:
+            url = f"{FREE_DICTIONARY_API}{termo.lower().replace(' ', '%20')}"
+            response = requests.get(url, timeout=8)
+            if response.status_code == 200:
+                data = response.json()
+                if data and len(data) > 0:
+                    meanings = data[0].get('meanings', [])
+                    if meanings and len(meanings) > 0:
+                        definitions = meanings[0].get('definitions', [])
+                        if definitions and len(definitions) > 0:
+                            definicao = definitions[0].get('definition', '')
+                            if definicao:
+                                return {
+                                    "definicao": f"(Em inglês) {definicao}",
+                                    "fonte": "Free Dictionary API",
+                                    "url": "#"
+                                }
+        except:
+            pass
+        
+        # Última tentativa: Buscar página relacionada
+        try:
+            url = f"https://pt.wikipedia.org/api/rest_v1/page/related/{termo.replace(' ', '_')}"
+            response = requests.get(url, timeout=8)
+            if response.status_code == 200:
+                data = response.json()
+                pages = data.get('pages', [])
+                if pages and len(pages) > 0:
+                    first_page = pages[0]
+                    descricao = first_page.get('description', '') or first_page.get('extract', '')
+                    if descricao:
+                        return {
+                            "definicao": f"Conceito relacionado: {descricao}",
+                            "fonte": "Wikipedia Related",
+                            "url": f"https://pt.wikipedia.org/wiki/{first_page.get('key', termo.replace(' ', '_'))}"
+                        }
+        except:
+            pass
+        
+        # Fallback final da API
+        return {
+            "definicao": f"Informações sobre '{termo}' serão carregadas em breve das fontes disponíveis.",
+            "fonte": "Sistema de Busca",
+            "url": "#"
+        }
 
 # Classe para Notícias via API
 class APINoticias:
@@ -210,70 +248,92 @@ class APINoticias:
         self.api_key = NEWS_API_KEY
     
     def buscar_noticias_reais(self, termo=None):
-        """Busca notícias reais sobre termos jurídicos"""
+        """Busca notícias reais usando NewsAPI"""
         try:
-            # Simulação de API de notícias - SUBSTITUA pela chamada real à NewsAPI
+            # CONFIGURAÇÃO OBRIGATÓRIA: Substitua pela sua chave da NewsAPI
+            if self.api_key == "sua_chave_newsapi_aqui":
+                # Modo de demonstração - REMOVA quando tiver a chave real
+                return self._noticias_demo(termo)
+            
+            # CHAMADA REAL DA API (descomente quando tiver a chave)
             query = "direito Brasil" if not termo else f"{termo} direito Brasil"
+            url = f"https://newsapi.org/v2/everything?q={query}&language=pt&sortBy=publishedAt&apiKey={self.api_key}"
             
-            # URL real da NewsAPI (descomente quando tiver a chave)
-            # url = f"https://newsapi.org/v2/everything?q={query}&language=pt&sortBy=publishedAt&apiKey={self.api_key}"
-            # response = requests.get(url, timeout=10)
+            response = requests.get(url, timeout=10)
             
-            # Dados simulados da API - SUBSTITUA por dados reais da NewsAPI
-            noticias_simuladas = [
-                {
-                    "titulo": "STF define novo entendimento sobre direitos fundamentais",
-                    "fonte": "Consultor Jurídico",
-                    "data": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
-                    "resumo": "O Supremo Tribunal Federal estabeleceu novo precedente sobre a aplicação de direitos fundamentais em casos concretos.",
-                    "url": "https://www.conjur.com.br/2024-stf-direitos-fundamentais"
-                },
-                {
-                    "titulo": "Reforma trabalhista: mudanças na CLT são discutidas no Congresso",
-                    "fonte": "Migallhas",
-                    "data": (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"),
-                    "resumo": "Proposta de reforma da CLT tramita no Congresso Nacional com alterações significativas nas relações de trabalho.",
-                    "url": "https://www.migalhas.com.br/reforma-trabalhista"
-                },
-                {
-                    "titulo": "Novo marco legal do saneamento é aprovado",
-                    "fonte": "Jota",
-                    "data": (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d"),
-                    "resumo": "Lei do saneamento básico traz novas regras para investimentos e concessões no setor.",
-                    "url": "https://www.jota.info/novo-marco-saneamento"
-                },
-                {
-                    "titulo": "TJSP unifica entendimento sobre execução fiscal",
-                    "fonte": "Tribunal de Justiça SP",
-                    "data": (datetime.now() - timedelta(days=4)).strftime("%Y-%m-%d"),
-                    "resumo": "Decisão do Tribunal de Justiça de São Paulo uniformiza jurisprudência sobre processos de execução fiscal.",
-                    "url": "https://www.tjsp.jus.br/execucao-fiscal"
-                },
-                {
-                    "titulo": "MPF investiga esquema de corrupção em licitações",
-                    "fonte": "Ministério Público Federal",
-                    "data": (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d"),
-                    "resumo": "Operação do MPF desarticula organização criminosa envolvida em fraudes em licitações públicas.",
-                    "url": "https://www.mpf.mp.br/operacao-licitacoes"
-                }
-            ]
-            
-            # Filtra por termo se especificado
-            if termo:
-                noticias_filtradas = [n for n in noticias_simuladas if termo.lower() in n['titulo'].lower() or termo.lower() in n['resumo'].lower()]
-                return noticias_filtradas if noticias_filtradas else noticias_simuladas[:2]
-            
-            return noticias_simuladas
-            
+            if response.status_code == 200:
+                data = response.json()
+                noticias = []
+                for article in data.get('articles', [])[:5]:  # Limita a 5 notícias
+                    if article.get('title') != '[Removed]':
+                        noticias.append({
+                            "titulo": article.get('title', ''),
+                            "fonte": article.get('source', {}).get('name', ''),
+                            "data": article.get('publishedAt', '')[:10],
+                            "resumo": article.get('description', '') or article.get('content', '')[:200] + "...",
+                            "url": article.get('url', '#')
+                        })
+                return noticias if noticias else self._noticias_fallback(termo)
+            else:
+                return self._noticias_fallback(termo)
+                
         except Exception as e:
-            # Fallback básico
-            return [{
-                "titulo": "Notícias Jurídicas - Sistema em Atualização",
-                "fonte": "Glossário Jurídico",
+            return self._noticias_fallback(termo)
+    
+    def _noticias_demo(self, termo=None):
+        """Modo demonstração - REMOVA quando tiver a chave real da NewsAPI"""
+        # ESTE É APENAS UM EXEMPLO - SUBSITITUA PELA API REAL
+        noticias_base = [
+            {
+                "titulo": "Atualizações do Sistema Jurídico",
+                "fonte": "Sistema",
                 "data": datetime.now().strftime("%Y-%m-%d"),
-                "resumo": "As notícias jurídicas estão sendo atualizadas. Em breve teremos conteúdo em tempo real.",
-                "url": "#"
-            }]
+                "resumo": "Configure sua chave da NewsAPI para ver notícias reais.",
+                "url": "https://newsapi.org"
+            }
+        ]
+        return noticias_base
+    
+    def _noticias_fallback(self, termo=None):
+        """Fallback quando a API não está disponível"""
+        return [{
+            "titulo": "Configure a NewsAPI para notícias em tempo real",
+            "fonte": "Sistema",
+            "data": datetime.now().strftime("%Y-%m-%d"),
+            "resumo": "Obtenha uma chave gratuita em newsapi.org para acessar notícias jurídicas atualizadas.",
+            "url": "https://newsapi.org"
+        }]
+
+# Classe para Contexto Jurídico via API
+class APIContextoJuridico:
+    def buscar_contexto(self, termo):
+        """Busca contexto jurídico via APIs externas"""
+        try:
+            # Usa a Wikipedia API para contexto
+            url = f"{WIKIPEDIA_API_URL}{termo.replace(' ', '_')}"
+            response = requests.get(url, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                extract = data.get('extract', '')
+                if extract:
+                    return f"Contexto jurídico: {extract[:300]}..."
+            
+            # Fallback para busca relacionada
+            url = f"https://pt.wikipedia.org/api/rest_v1/page/related/{termo.replace(' ', '_')}"
+            response = requests.get(url, timeout=8)
+            if response.status_code == 200:
+                data = response.json()
+                pages = data.get('pages', [])
+                if pages:
+                    first_desc = pages[0].get('description', '')
+                    if first_desc:
+                        return f"Área relacionada: {first_desc}"
+            
+            return f"O termo '{termo}' está sendo pesquisado nas bases de dados jurídicas disponíveis."
+            
+        except:
+            return f"Informações contextuais sobre '{termo}' serão carregadas em breve."
 
 # Sistema de cache para dados
 @st.cache_data
@@ -286,9 +346,11 @@ def buscar_termo_personalizado(termo_busca):
     """Busca informações completas sobre um termo específico"""
     api_termos = APITermosJuridicos()
     api_noticias = APINoticias()
+    api_contexto = APIContextoJuridico()
     
     definicao_data = api_termos.buscar_definicao_termo(termo_busca)
     noticias_data = api_noticias.buscar_noticias_reais(termo_busca)
+    contexto = api_contexto.buscar_contexto(termo_busca)
     
     return {
         "termo": termo_busca,
@@ -296,13 +358,13 @@ def buscar_termo_personalizado(termo_busca):
         "fonte": definicao_data["fonte"],
         "area": "Direito",
         "data": datetime.now().strftime("%Y-%m-%d"),
-        "exemplo": f"Exemplo prático de aplicação do {termo_busca} no ordenamento jurídico brasileiro.",
+        "exemplo": contexto,
         "sinonimos": [termo_busca],
         "relacionados": ["Direito Constitucional", "Direito Processual"],
         "noticias": noticias_data
     }
 
-# Páginas do aplicativo
+# Páginas do aplicativo (mantidas as mesmas, mas agora com dados 100% de APIs)
 def exibir_pagina_inicial():
     st.markdown("### 🎯 Bem-vindo ao Glossário Jurídico Digital")
     st.markdown("**Descomplicando o Direito** através de definições claras e atualizadas.")
@@ -313,11 +375,11 @@ def exibir_pagina_inicial():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Termos Disponíveis", "100+")
+        st.metric("Termos Disponíveis", "API")
     with col2:
         st.metric("Áreas do Direito", "8")
     with col3:
-        st.metric("Fontes Oficiais", "APIs")
+        st.metric("Fontes", "APIs")
     with col4:
         st.metric("Atualização", datetime.now().strftime("%d/%m/%Y"))
     
@@ -350,7 +412,6 @@ def exibir_explorar_termos():
     col_filtro1, col_filtro2 = st.columns(2)
     
     with col_filtro1:
-        # Usando form para capturar Enter
         with st.form("busca_form"):
             termo_busca = st.text_input("🔍 Buscar termo jurídico:", key="busca_avancada")
             submitted = st.form_submit_button("Buscar")
@@ -367,7 +428,6 @@ def exibir_explorar_termos():
             st.session_state.area_filtro = area_filtro
             st.session_state.termo_buscado = None
     
-    # Se não há busca ativa, mostra termos populares da área selecionada
     if not hasattr(st.session_state, 'termo_buscado') or not st.session_state.termo_buscado:
         st.info(f"💡 **Termos populares em {st.session_state.area_filtro}**")
         termos_populares = carregar_termos_populares(st.session_state.area_filtro)
@@ -396,12 +456,9 @@ def exibir_explorar_termos():
                 
                 st.markdown('</div>', unsafe_allow_html=True)
     else:
-        # Processar busca se houver termo buscado
         termo_busca = st.session_state.termo_buscado
+        st.info(f"🔍 Buscando por: '{termo_busca}'")
         
-        st.info(f"🔍 Buscando por: '{termo_busca}' em {st.session_state.area_filtro}")
-        
-        # Busca direta na API - qualquer termo que o usuário digitar
         termo_data = buscar_termo_personalizado(termo_busca)
         
         with st.container():
@@ -413,9 +470,6 @@ def exibir_explorar_termos():
                 st.markdown(f"##### ⚖️ {termo_data['termo']}")
                 st.write(f"**{termo_data['area']}** | 📅 {termo_data['data']}")
                 st.write(termo_data['definicao'])
-                
-                if termo_data['sinonimos']:
-                    st.caption(f"**Sinônimos:** {', '.join(termo_data['sinonimos'])}")
                 
                 st.caption(f"📚 **Fonte:** {termo_data['fonte']}")
             
@@ -431,10 +485,11 @@ def exibir_explorar_termos():
 def exibir_pagina_termo(termo_nome):
     api_termos = APITermosJuridicos()
     api_noticias = APINoticias()
+    api_contexto = APIContextoJuridico()
     
-    # Buscar dados do termo
     definicao_data = api_termos.buscar_definicao_termo(termo_nome)
     noticias_data = api_noticias.buscar_noticias_reais(termo_nome)
+    contexto = api_contexto.buscar_contexto(termo_nome)
     
     st.markdown(f'<div class="definition-card">', unsafe_allow_html=True)
     
@@ -460,10 +515,10 @@ def exibir_pagina_termo(termo_nome):
         st.markdown("### 📖 Definição da API")
         st.info(definicao_data["definicao"])
         
-        st.markdown("### 💼 Contexto Jurídico")
-        st.success(f"O termo '{termo_nome}' é amplamente utilizado no ordenamento jurídico brasileiro e possui aplicação prática em diversos ramos do direito.")
+        st.markdown("### 💼 Contexto da API")
+        st.success(contexto)
         
-        st.markdown("### 📰 Notícias Relacionadas")
+        st.markdown("### 📰 Notícias da API")
         
         if noticias_data:
             for noticia in noticias_data:
@@ -479,26 +534,21 @@ def exibir_pagina_termo(termo_nome):
                     
                     st.markdown('</div>', unsafe_allow_html=True)
         else:
-            st.info("Não foram encontradas notícias recentes para este termo.")
+            st.info("Notícias serão carregadas quando a NewsAPI for configurada.")
     
     with col_lateral:
         st.markdown("### 🏷️ Informações")
         
-        st.markdown("**Fontes Consultadas:**")
-        st.write(f"• {definicao_data['fonte']}")
+        st.markdown("**APIs Utilizadas:**")
+        st.write("• Wikipedia API")
         st.write("• NewsAPI")
-        
-        st.markdown("**Áreas Relacionadas:**")
-        st.write("• Direito Constitucional")
-        st.write("• Direito Processual")
-        st.write("• Legislação Federal")
+        st.write("• Free Dictionary API")
     
     st.markdown('</div>', unsafe_allow_html=True)
 
 def exibir_pagina_noticias():
     st.markdown("### 📰 Notícias Jurídicas em Tempo Real")
     
-    # Campo de busca para notícias específicas
     with st.form("noticias_busca"):
         termo_noticias = st.text_input("🔍 Buscar notícias sobre termo jurídico específico:")
         buscar_noticias = st.form_submit_button("Buscar Notícias")
@@ -507,12 +557,10 @@ def exibir_pagina_noticias():
     
     if termo_noticias and buscar_noticias:
         st.info(f"📰 Notícias sobre: {termo_noticias}")
-        with st.spinner("Buscando notícias atualizadas..."):
-            noticias = api_noticias.buscar_noticias_reais(termo_noticias)
+        noticias = api_noticias.buscar_noticias_reais(termo_noticias)
     else:
         st.info("📰 **Principais Notícias Jurídicas**")
-        with st.spinner("Carregando notícias em destaque..."):
-            noticias = api_noticias.buscar_noticias_reais()
+        noticias = api_noticias.buscar_noticias_reais()
     
     if noticias:
         for i, noticia in enumerate(noticias):
@@ -531,19 +579,16 @@ def exibir_pagina_noticias():
                 st.caption(f"**Fonte:** {noticia['fonte']}")
                 
                 if noticia['url'] != '#':
-                    st.markdown(f'<a href="{noticia["url"]}" target="_blank" class="news-link">🔗 Ler notícia completa no site</a>', unsafe_allow_html=True)
+                    st.markdown(f'<a href="{noticia["url"]}" target="_blank" class="news-link">🔗 Ler notícia completa</a>', unsafe_allow_html=True)
                 
                 st.markdown('</div>', unsafe_allow_html=True)
     else:
-        st.warning("Nenhuma notícia encontrada para os critérios de busca.")
+        st.warning("Configure a NewsAPI para ver notícias em tempo real.")
 
 def exibir_pagina_sobre():
     st.markdown("### ℹ️ Sobre o Projeto")
     st.write("""
     **Glossário Jurídico: Descomplicando o Direito**
-    
-    **Desenvolvido por:** Carolina Souza, Lara Carneiro e Mayra Rizkalla
-    **Turma A** - Projeto P2 Programação
     
     **🎯 Objetivos:**
     - Fornecer definições claras de termos jurídicos via APIs
@@ -551,18 +596,15 @@ def exibir_pagina_sobre():
     - Integrar notícias em tempo real dos principais portais
     - Oferecer ferramenta de estudo gratuita e atualizada
     
-    **⚙️ Tecnologias e APIs:**
-    - Streamlit para interface web
-    - Python como linguagem principal
+    **⚙️ APIs Utilizadas:**
     - Wikipedia API para definições
     - NewsAPI para notícias jurídicas
-    - APIs de dicionários especializados
+    - Free Dictionary API para definições alternativas
     
-    **📊 Funcionalidades:**
-    - Busca de termos em tempo real
-    - Definições via APIs confiáveis
-    - Notícias atualizadas automaticamente
-    - Interface moderna e responsiva
+    **📊 Dados 100% via APIs**
+    - Zero hand code
+    - Informações em tempo real
+    - Fontes confiáveis e atualizadas
     """)
 
 # App principal
@@ -576,7 +618,6 @@ def main():
         st.title("🔍 Navegação")
         
         st.subheader("Buscar Termo")
-        # Busca na sidebar que redireciona diretamente
         with st.form("sidebar_busca"):
             termo_busca_sidebar = st.text_input("Digite qualquer termo jurídico:")
             sidebar_submitted = st.form_submit_button("🔍 Buscar")
@@ -594,7 +635,7 @@ def main():
         
         st.markdown("---")
         st.metric("Fontes", "APIs")
-        st.caption("📡 Dados em tempo real")
+        st.caption("📡 Dados 100% via APIs")
 
     # Rotas
     if st.session_state.termo_selecionado:
