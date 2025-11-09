@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
@@ -70,13 +71,6 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px;
-        padding: 20px;
-        color: white;
-        text-align: center;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -84,7 +78,7 @@ st.markdown("""
 if 'termo_selecionado' not in st.session_state:
     st.session_state.termo_selecionado = None
 
-# Classe para APIs Jurídicas REAIS (SEM PANDAS)
+# Classe para APIs Jurídicas REAIS
 class APIGlossarioJuridico:
     def __init__(self):
         self.apis_config = {
@@ -401,13 +395,6 @@ class GoogleNewsIntegracao:
                     "data": "2024-01-15",
                     "resumo": "O Supremo Tribunal Federal concedeu habeas corpus para trancar ação penal contra acusado por insuficiência de provas.",
                     "url": "#"
-                },
-                {
-                    "titulo": "Novo entendimento sobre habeas corpus em casos de prisão preventiva",
-                    "fonte": "JusBrasil",
-                    "data": "2024-01-10",
-                    "resumo": "Tribunais superiores discutem aplicação do habeas corpus em prisões cautelares.",
-                    "url": "#"
                 }
             ],
             "Mandado de Segurança": [
@@ -416,15 +403,6 @@ class GoogleNewsIntegracao:
                     "fonte": "Migalhas",
                     "data": "2024-01-12",
                     "resumo": "Superior Tribunal de Justiça estabelece entendimento sobre direito líquido e certo.",
-                    "url": "#"
-                }
-            ],
-            "Ação Rescisória": [
-                {
-                    "titulo": "STJ admite ação rescisória por documento novo descoberto",
-                    "fonte": "ConJur",
-                    "data": "2024-01-08",
-                    "resumo": "Decisão inédita permite revisão de sentença com base em nova prova.",
                     "url": "#"
                 }
             ]
@@ -443,7 +421,7 @@ class GoogleNewsIntegracao:
         
         return noticias_termo
 
-# Sistema de cache para dados (SEM PANDAS)
+# Sistema de cache para dados
 @st.cache_data
 def carregar_dados_glossario():
     api = APIGlossarioJuridico()
@@ -467,7 +445,7 @@ def carregar_dados_glossario():
                 "detalhes": dados_termo.get("jurisprudencia", "Jurisprudência em atualização.")
             })
     
-    return dados
+    return pd.DataFrame(dados)
 
 def _gerar_exemplo(termo):
     exemplos_map = {
@@ -480,11 +458,7 @@ def _gerar_exemplo(termo):
         "Desconsideração da Personalidade Jurídica": "A desconsideração foi aplicada para cobrar dívidas da empresa diretamente dos sócios.",
         "Jus Postulandi": "A defensoria pública exerce o jus postulandi em favor dos necessitados.",
         "Agravo de Instrumento": "O agravo foi interposto contra decisão que indeferiu prova pericial.",
-        "Coisa Julgada": "A sentença transitou em julgado após esgotados todos os recursos.",
-        "Recurso Extraordinário": "O recurso extraordinário foi interposto para questionar decisão que violou a Constituição Federal.",
-        "Embargos de Declaração": "Foram opostos embargos de declaração para esclarecer ponto obscuro na sentença.",
-        "Prescrição": "O direito de ação prescreveu após decorrido o prazo legal sem exercício.",
-        "Ação Civil Pública": "O Ministério Público ajuizou ação civil pública para proteger o meio ambiente."
+        "Coisa Julgada": "A sentença transitou em julgado após esgotados todos os recursos."
     }
     return exemplos_map.get(termo, f"Exemplo prático do termo {termo} em contexto jurídico.")
 
@@ -500,37 +474,29 @@ def _gerar_sinonimos(termo):
         "Jus Postulandi": ["Capacidade Postulatória"],
         "Recurso Extraordinário": ["RE"],
         "Recurso Especial": ["REsp"],
-        "Embargos de Declaração": ["EDcl"],
-        "Prescrição": ["Decadência", "Perda do direito"],
-        "Liminar": ["Medida Cautelar", "Decisão Provisória"]
+        "Embargos de Declaração": ["EDcl"]
     }
     return sinonimos_map.get(termo, [])
 
 def _gerar_relacionados(termo):
     relacionados_map = {
-        "Habeas Corpus": ["Mandado de Segurança", "Liberdade", "Prisão", "Direito Constitucional"],
-        "Mandado de Segurança": ["Habeas Corpus", "Direito Líquido", "Ação", "Remédio Constitucional"],
-        "Ação Rescisória": ["Coisa Julgada", "Recurso", "Sentença", "Processo Civil"],
-        "Usucapião": ["Propriedade", "Posse", "Direito Real", "Direito Civil"],
-        "Crime Culposo": ["Crime Doloso", "Culpa", "Dolo", "Direito Penal"],
-        "Coisa Julgada": ["Sentença", "Recurso", "Processo", "Jurisdição"],
-        "Agravo de Instrumento": ["Recurso", "Decisão Interlocutória", "Processo Civil"],
-        "Jus Postulandi": ["Legitimidade", "Capacidade Processual", "Advocacia"],
-        "Recurso Extraordinário": ["STF", "Constituição", "Controle de Constitucionalidade"],
-        "Prescrição": ["Decadência", "Prazo", "Direito Civil", "Obrigações"]
+        "Habeas Corpus": ["Mandado de Segurança", "Liberdade", "Prisão"],
+        "Mandado de Segurança": ["Habeas Corpus", "Direito Líquido", "Ação"],
+        "Ação Rescisória": ["Coisa Julgada", "Recurso", "Sentença"],
+        "Usucapião": ["Propriedade", "Posse", "Direito Real"],
+        "Crime Culposo": ["Crime Doloso", "Culpa", "Dolo"],
+        "Coisa Julgada": ["Sentença", "Recurso", "Processo"],
+        "Agravo de Instrumento": ["Recurso", "Decisão Interlocutória"],
+        "Jus Postulandi": ["Legitimidade", "Capacidade Processual"]
     }
     return relacionados_map.get(termo, ["Direito", "Jurisprudência", "Legislação"])
 
-# Funções de visualização (SEM PANDAS)
-def criar_grafico_areas(dados):
-    areas = {}
-    for termo in dados:
-        area = termo['area']
-        areas[area] = areas.get(area, 0) + 1
+# Funções de visualização
+def criar_grafico_areas(df):
+    contagem_areas = df['area'].value_counts().reset_index()
+    contagem_areas.columns = ['Área', 'Quantidade']
     
-    areas_list = [{'Área': area, 'Quantidade': qtd} for area, qtd in areas.items()]
-    
-    fig = px.pie(areas_list, values='Quantidade', names='Área',
+    fig = px.pie(contagem_areas, values='Quantidade', names='Área',
                  title='🎯 Distribuição por Área do Direito',
                  color_discrete_sequence=px.colors.qualitative.Bold)
     
@@ -546,15 +512,11 @@ def criar_grafico_areas(dados):
     
     return fig
 
-def criar_grafico_fontes(dados):
-    fontes = {}
-    for termo in dados:
-        fonte = termo['fonte']
-        fontes[fonte] = fontes.get(fonte, 0) + 1
+def criar_grafico_fontes(df):
+    contagem_fontes = df['fonte'].value_counts().reset_index()
+    contagem_fontes.columns = ['Fonte', 'Quantidade']
     
-    fontes_list = [{'Fonte': fonte, 'Quantidade': qtd} for fonte, qtd in fontes.items()]
-    
-    fig = px.bar(fontes_list, x='Fonte', y='Quantidade',
+    fig = px.bar(contagem_fontes, x='Fonte', y='Quantidade',
                  title='📊 Termos por Fonte Oficial',
                  color='Quantidade',
                  color_continuous_scale='Blues')
@@ -568,26 +530,8 @@ def criar_grafico_fontes(dados):
     
     return fig
 
-# Funções auxiliares para filtros (SEM PANDAS)
-def filtrar_por_area(dados, area):
-    if area == "Todas":
-        return dados
-    return [termo for termo in dados if termo['area'] == area]
-
-def filtrar_por_busca(dados, busca):
-    if not busca:
-        return dados
-    busca_lower = busca.lower()
-    return [termo for termo in dados 
-            if busca_lower in termo['termo'].lower() 
-            or busca_lower in termo['definicao'].lower()]
-
-def obter_areas_unicas(dados):
-    areas = set(termo['area'] for termo in dados)
-    return sorted(list(areas))
-
 # Páginas do aplicativo
-def exibir_pagina_inicial(dados):
+def exibir_pagina_inicial(df):
     st.markdown("### 🎯 Bem-vindo ao Glossário Jurídico Digital")
     st.markdown("**Descomplicando o Direito** através de definições claras e atualizadas.")
     
@@ -595,32 +539,27 @@ def exibir_pagina_inicial(dados):
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Total de Termos", len(dados))
+        st.metric("Total de Termos", len(df))
     with col2:
-        st.metric("Áreas do Direito", len(obter_areas_unicas(dados)))
+        st.metric("Áreas do Direito", df['area'].nunique())
     with col3:
-        fontes = set(termo['fonte'] for termo in dados)
-        st.metric("Fontes Oficiais", len(fontes))
+        st.metric("Fontes Oficiais", df['fonte'].nunique())
     with col4:
-        datas = [termo['data'] for termo in dados]
-        st.metric("Atualização", max(datas) if datas else "N/A")
+        st.metric("Atualização", df['data'].max())
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.plotly_chart(criar_grafico_areas(dados), use_container_width=True)
+        st.plotly_chart(criar_grafico_areas(df), use_container_width=True)
     
     with col2:
-        st.plotly_chart(criar_grafico_fontes(dados), use_container_width=True)
+        st.plotly_chart(criar_grafico_fontes(df), use_container_width=True)
     
     st.markdown("### 🔥 Termos em Destaque")
-    
-    # Selecionar alguns termos aleatórios para destaque
-    import random
-    termos_destaque = random.sample(dados, min(4, len(dados)))
+    termos_destaque = df.sample(min(4, len(df)))
     
     cols = st.columns(2)
-    for idx, termo in enumerate(termos_destaque):
+    for idx, (_, termo) in enumerate(termos_destaque.iterrows()):
         with cols[idx % 2]:
             with st.container():
                 st.markdown(f'<div class="term-card">', unsafe_allow_html=True)
@@ -637,7 +576,7 @@ def exibir_pagina_inicial(dados):
                 
                 st.markdown('</div>', unsafe_allow_html=True)
 
-def exibir_explorar_termos(dados, area_selecionada, termo_busca):
+def exibir_explorar_termos(df, area_selecionada, termo_busca):
     st.markdown("### 📚 Explorar Termos Jurídicos")
     
     col_filtro1, col_filtro2 = st.columns(2)
@@ -646,17 +585,23 @@ def exibir_explorar_termos(dados, area_selecionada, termo_busca):
         busca_avancada = st.text_input("🔍 Buscar termo:", key="busca_avancada")
     
     with col_filtro2:
-        areas = ["Todas"] + obter_areas_unicas(dados)
-        area_filtro = st.selectbox("🎯 Filtrar por área:", areas)
+        area_filtro = st.selectbox("🎯 Filtrar por área:", ["Todas"] + list(df['area'].unique()))
     
-    # Aplicar filtros
-    dados_filtrados = filtrar_por_area(dados, area_filtro)
-    dados_filtrados = filtrar_por_busca(dados_filtrados, busca_avancada)
+    df_filtrado = df.copy()
     
-    if len(dados_filtrados) > 0:
-        st.success(f"🎉 **{len(dados_filtrados)}** termo(s) encontrado(s)")
+    if area_filtro != "Todas":
+        df_filtrado = df_filtrado[df_filtrado['area'] == area_filtro]
+    
+    if busca_avancada:
+        df_filtrado = df_filtrado[
+            df_filtrado['termo'].str.contains(busca_avancada, case=False) |
+            df_filtrado['definicao'].str.contains(busca_avancada, case=False)
+        ]
+    
+    if len(df_filtrado) > 0:
+        st.success(f"🎉 **{len(df_filtrado)}** termo(s) encontrado(s)")
         
-        for termo in dados_filtrados:
+        for _, termo in df_filtrado.iterrows():
             with st.container():
                 st.markdown(f'<div class="term-card">', unsafe_allow_html=True)
                 
@@ -682,18 +627,8 @@ def exibir_explorar_termos(dados, area_selecionada, termo_busca):
     else:
         st.warning("Nenhum termo encontrado com os filtros aplicados.")
 
-def exibir_pagina_termo(dados, termo_nome):
-    # Encontrar o termo nos dados
-    termo_data = None
-    for termo in dados:
-        if termo['termo'] == termo_nome:
-            termo_data = termo
-            break
-    
-    if not termo_data:
-        st.error("Termo não encontrado")
-        return
-    
+def exibir_pagina_termo(df, termo_nome):
+    termo_data = df[df['termo'] == termo_nome].iloc[0]
     news = GoogleNewsIntegracao()
     
     st.markdown(f'<div class="definition-card">', unsafe_allow_html=True)
@@ -734,14 +669,10 @@ def exibir_pagina_termo(dados, termo_nome):
         
         st.markdown("**Relacionados:**")
         for relacionado in termo_data['relacionados']:
-            # Verificar se o termo relacionado existe nos dados
-            termo_existe = any(t['termo'] == relacionado for t in dados)
-            if termo_existe:
-                if st.button(f"→ {relacionado}", key=f"rel_{relacionado}"):
+            if st.button(f"→ {relacionado}", key=f"rel_{relacionado}"):
+                if relacionado in df['termo'].values:
                     st.session_state.termo_selecionado = relacionado
                     st.rerun()
-            else:
-                st.write(f"• {relacionado}")
     
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -809,12 +740,6 @@ def exibir_pagina_sobre():
     - STJ (Superior Tribunal de Justiça)
     - Câmara dos Deputados
     - Base de dados do Planalto
-    
-    **📊 Estatísticas:**
-    - Mais de 50 termos jurídicos essenciais
-    - 8 áreas do direito contempladas
-    - 4 fontes oficiais consultadas
-    - Interface moderna e responsiva
     """)
 
 # App principal
@@ -822,8 +747,13 @@ def main():
     st.markdown('<h1 class="main-header">⚖️ Glossário Jurídico</h1>', unsafe_allow_html=True)
     st.markdown("### Descomplicando o Direito para estudantes e leigos")
     
-    # Carregar dados
-    dados = carregar_dados_glossario()
+    # Carregar dados com tratamento de erro
+    try:
+        df = carregar_dados_glossario()
+    except Exception as e:
+        st.error(f"Erro ao carregar dados: {e}")
+        # Criar DataFrame vazio como fallback
+        df = pd.DataFrame(columns=['termo', 'definicao', 'area', 'fonte', 'data', 'exemplo', 'sinonimos', 'relacionados', 'detalhes'])
     
     # Sidebar
     with st.sidebar:
@@ -834,31 +764,33 @@ def main():
         termo_busca = st.text_input("Digite o termo jurídico:")
         
         st.subheader("Filtros")
-        areas = ["Todas"] + obter_areas_unicas(dados)
-        area_selecionada = st.selectbox("Área do Direito", areas)
+        area_selecionada = st.selectbox("Área do Direito", ["Todas"] + list(df['area'].unique()) if not df.empty else ["Todas"])
         
         st.subheader("Termos Populares")
-        termos_populares = dados[:6]  # Primeiros 6 termos
-        for termo in termos_populares:
-            if st.button(termo['termo'], key=f"side_{termo['termo']}"):
-                st.session_state.termo_selecionado = termo['termo']
-                st.rerun()
+        if not df.empty:
+            for termo in df['termo'].head(6):
+                if st.button(termo, key=f"side_{termo}"):
+                    st.session_state.termo_selecionado = termo
+                    st.rerun()
+        else:
+            st.write("Nenhum termo disponível")
         
         st.markdown("---")
-        st.metric("Total de Termos", len(dados))
+        st.metric("Total de Termos", len(df) if not df.empty else 0)
     
     # Rotas
-    if st.session_state.termo_selecionado:
-        exibir_pagina_termo(dados, st.session_state.termo_selecionado)
+    if st.session_state.termo_selecionado and not df.empty:
+        exibir_pagina_termo(df, st.session_state.termo_selecionado)
     else:
         tab1, tab2, tab3, tab4 = st.tabs(["🏠 Início", "📚 Explorar", "📰 Notícias", "ℹ️ Sobre"])
         with tab1:
-            exibir_pagina_inicial(dados)
+            exibir_pagina_inicial(df)
         with tab2:
-            exibir_explorar_termos(dados, area_selecionada, termo_busca)
+            exibir_explorar_termos(df, area_selecionada, termo_busca)
         with tab3:
             exibir_pagina_noticias()
         with tab4:
             exibir_pagina_sobre()
-            
+
+# Execução direta (sem verificação __name__ para Streamlit Cloud)
 main()
