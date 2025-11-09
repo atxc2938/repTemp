@@ -17,8 +17,6 @@ import requests
 import json
 import urllib.parse
 import re
-import xml.etree.ElementTree as ET
-from bs4 import BeautifulSoup
 
 # Configuração da página - SIMPLIFICADA para evitar erros
 st.set_page_config(
@@ -96,8 +94,6 @@ SIGNIFICADO_API = "https://significado.herokuapp.com/v2/"
 # Fontes de notícias brasileiras
 CAMARA_API = "https://dadosabertos.camara.leg.br/api/v2/noticias"
 IBGE_API = "https://servicodados.ibge.gov.br/api/v3/noticias/"
-G1_RSS = "https://g1.globo.com/rss/g1/"
-UOL_RSS = "https://rss.uol.com.br/feed/noticias.xml"
 
 # Classe para buscar definições - ABORDAGEM DIRETA
 class BuscadorDefinicoes:
