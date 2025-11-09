@@ -25,54 +25,229 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS personalizado - MANTIDO
+# CSS personalizado - DESIGN MODERNO E MINIMALISTA
 st.markdown("""
 <style>
+    /* Cores da paleta */
+    :root {
+        --dourado: #D4AF37;
+        --dourado-claro: #F4E4A6;
+        --cimento: #8C8C8C;
+        --cimento-claro: #B8B8B8;
+        --cinza-escuro: #2C2C2C;
+        --cinza-medio: #404040;
+        --branco: #FFFFFF;
+    }
+    
+    /* Estilos gerais */
+    .main {
+        background: linear-gradient(135deg, var(--cinza-escuro) 0%, var(--cinza-medio) 100%);
+        color: var(--branco);
+    }
+    
+    .stApp {
+        background: linear-gradient(135deg, var(--cinza-escuro) 0%, var(--cinza-medio) 100%);
+    }
+    
     .main-header {
-        font-size: 2.5rem;
-        color: #1f3a60;
+        font-size: 3rem;
+        color: var(--dourado);
         text-align: center;
         margin-bottom: 1rem;
         font-weight: 800;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        font-family: 'Georgia', serif;
     }
+    
+    .subheader {
+        font-size: 1.3rem;
+        color: var(--cimento-claro);
+        text-align: center;
+        margin-bottom: 2rem;
+        font-weight: 300;
+        letter-spacing: 1px;
+    }
+    
+    /* Cards modernos */
     .term-card {
-        background: #ffffff;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 25px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--dourado);
+    }
+    
+    .term-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(212, 175, 55, 0.15);
+        border-left: 4px solid var(--dourado);
+    }
+    
+    .news-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(10px);
         border-radius: 12px;
         padding: 20px;
-        margin-bottom: 15px;
-        border-left: 5px solid #1f3a60;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e9ecef;
+        margin-bottom: 16px;
+        border: 1px solid rgba(140, 140, 140, 0.3);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--cimento);
     }
-    .news-card {
-        background: #e8f4fd;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 12px;
-        border-left: 4px solid #17a2b8;
+    
+    .news-card:hover {
+        transform: translateX(5px);
+        border-left: 4px solid var(--dourado);
     }
+    
     .definition-card {
-        background: #f0f7ff;
-        border-radius: 15px;
-        padding: 25px;
-        margin-bottom: 25px;
-        border: 2px solid #1f3a60;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(15px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.2);
     }
+    
+    /* Botões estilizados */
     .stButton button {
-        background: #1f3a60;
-        color: white;
+        background: linear-gradient(135deg, var(--dourado) 0%, #B8860B 100%);
+        color: var(--cinza-escuro);
         border: none;
-        border-radius: 6px;
-        padding: 8px 16px;
+        border-radius: 8px;
+        padding: 10px 20px;
         font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
     }
+    
+    .stButton button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        background: linear-gradient(135deg, #E6C158 0%, var(--dourado) 100%);
+    }
+    
+    /* Links */
     .news-link {
-        color: #1f3a60;
+        color: var(--dourado);
         text-decoration: none;
         font-weight: 600;
+        transition: all 0.3s ease;
+        border-bottom: 1px solid transparent;
     }
+    
     .news-link:hover {
-        text-decoration: underline;
+        color: var(--dourado-claro);
+        border-bottom: 1px solid var(--dourado);
+    }
+    
+    /* Sidebar */
+    .css-1d391kg {
+        background: linear-gradient(180deg, var(--cinza-escuro) 0%, var(--cinza-medio) 100%) !important;
+    }
+    
+    .sidebar .sidebar-content {
+        background: linear-gradient(180deg, var(--cinza-escuro) 0%, var(--cinza-medio) 100%);
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px 8px 0 0;
+        padding: 12px 24px;
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        color: var(--cimento-claro);
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, var(--dourado) 0%, #B8860B 100%) !important;
+        color: var(--cinza-escuro) !important;
+        font-weight: 600;
+    }
+    
+    /* Métricas */
+    [data-testid="stMetricValue"] {
+        color: var(--dourado) !important;
+        font-size: 1.8rem !important;
+        font-weight: 700;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        color: var(--cimento-claro) !important;
+        font-size: 0.9rem !important;
+    }
+    
+    /* Inputs */
+    .stTextInput input {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(212, 175, 55, 0.3) !important;
+        border-radius: 8px !important;
+        color: var(--branco) !important;
+        padding: 12px !important;
+    }
+    
+    .stTextInput input:focus {
+        border-color: var(--dourado) !important;
+        box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
+    }
+    
+    /* Selectbox */
+    .stSelectbox div[data-baseweb="select"] {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(212, 175, 55, 0.3) !important;
+        border-radius: 8px !important;
+        color: var(--branco) !important;
+    }
+    
+    /* Spinner */
+    .stSpinner > div {
+        border-color: var(--dourado) transparent transparent transparent !important;
+    }
+    
+    /* Info boxes */
+    .stAlert {
+        background: rgba(212, 175, 55, 0.1) !important;
+        border: 1px solid rgba(212, 175, 55, 0.3) !important;
+        border-radius: 12px !important;
+        color: var(--dourado-claro) !important;
+    }
+    
+    /* Text colors */
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--dourado) !important;
+    }
+    
+    p, div, span {
+        color: var(--cimento-claro) !important;
+    }
+    
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: var(--cinza-medio);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: var(--dourado);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--dourado-claro);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -593,7 +768,7 @@ def exibir_pagina_sobre():
     st.write("""
     **Glossário Jurídico: Descomplicando o Direito**
     
-    **Desenvolvido por:** Mayra Rizkalla, Carolina Souza e Lara Carneiro
+    **Desenvolvido por:** Carolina Souza, Lara Carneiro e Mayra Rizkalla
     **Turma A** - Projeto P2 Programação
     
     **🎯 Objetivos:**
@@ -613,7 +788,7 @@ def exibir_pagina_sobre():
     - Base de dados do Planalto
     
     **📊 Estatísticas:**
-    - +100 termos jurídicos essenciais
+    - 41 termos jurídicos essenciais
     - 8 áreas do direito contempladas
     - 4 fontes oficiais consultadas
     - Interface moderna e responsiva
@@ -623,7 +798,7 @@ def exibir_pagina_sobre():
 # App principal
 def main():
     st.markdown('<h1 class="main-header">⚖️ Glossário Jurídico</h1>', unsafe_allow_html=True)
-    st.markdown("### Definições e notícias em tempo real via APIs")
+    st.markdown('<p class="subheader">Definições e notícias em tempo real via APIs</p>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
