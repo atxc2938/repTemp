@@ -861,5 +861,5 @@ def main():
         with tab4:
             exibir_pagina_sobre()
 
-if __name__ == "__main__":
+if __name__ == "__streamlit_app__":
     main()
