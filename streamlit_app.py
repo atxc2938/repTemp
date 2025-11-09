@@ -748,4 +748,21 @@ def main():
         
         st.markdown("---")
         st.metric("Fontes", "APIs BR")
-        st.c
+        st.caption("📡 Dados 100% via APIs Brasileiras")
+
+    # Rotas
+    if st.session_state.termo_selecionado:
+        exibir_pagina_termo(st.session_state.termo_selecionado)
+    else:
+        tab1, tab2, tab3, tab4 = st.tabs(["🏠 Início", "📚 Explorar", "📰 Notícias", "ℹ️ Sobre"])
+        with tab1:
+            exibir_pagina_inicial()
+        with tab2:
+            exibir_explorar_termos()
+        with tab3:
+            exibir_pagina_noticias()
+        with tab4:
+            exibir_pagina_sobre()
+
+if __name__ == "__main__":
+    main()
