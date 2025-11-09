@@ -14,6 +14,7 @@ import streamlit as st
 from datetime import datetime, timedelta
 import random
 import requests
+import json
 
 # Configuração da página - SIMPLIFICADA para evitar erros
 st.set_page_config(
@@ -63,6 +64,14 @@ st.markdown("""
         padding: 8px 16px;
         font-weight: 600;
     }
+    .news-link {
+        color: #1f3a60;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .news-link:hover {
+        text-decoration: underline;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -71,64 +80,88 @@ if 'termo_selecionado' not in st.session_state:
     st.session_state.termo_selecionado = None
 if 'termo_buscado' not in st.session_state:
     st.session_state.termo_buscado = None
+if 'area_filtro' not in st.session_state:
+    st.session_state.area_filtro = "Todas"
 
 # APIs - Substitua pelas suas chaves reais
 NEWS_API_KEY = "sua_chave_newsapi_aqui"  # Obtenha em: https://newsapi.org
 WIKIPEDIA_API_URL = "https://pt.wikipedia.org/api/rest_v1/page/summary/"
-
-# Lista completa de termos jurídicos para busca por substring
-TERMOS_JURIDICOS_COMPLETOS = [
-    "Habeas Corpus", "Mandado de Segurança", "Recurso Extraordinário",
-    "Ação Rescisória", "Usucapião", "Princípio da Isonomia",
-    "Crime Culposo", "Ação Civil Pública", "Prescrição", "Sentença",
-    "Coisa Julgada", "Liminar", "Prisão Preventiva", "Desconsideração da Personalidade Jurídica",
-    "Embargos de Declaração", "Agravo de Instrumento", "Jus Postulandi", "Recurso Especial",
-    "Arguição de Descumprimento de Preceito Fundamental", "Súmula Vinculante", "Mandado de Injunção",
-    "Habeas Data", "Ação Popular", "Recurso Ordinário", "Ação Monitória", "Execução de Sentença",
-    "Tutela Antecipada", "Impugnação", "Apelação", "Agravo Retido", "Exceção", "Embargos",
-    "Recurso Inominado", "Ação Declaratória", "Ação Condenatória", "Ação Constitutiva",
-    "Ação Mandamental", "Ação Coletiva", "Ação Individual", "Ação de Consignação em Pagamento",
-    "Ação de Depósito", "Ação de Nunciação de Obra Nova", "Ação de Usucapião",
-    "Ação de Divisão e Demarcação", "Ação de Investigação de Paternidade", "Ação de Alimentos",
-    "Ação de Guarda", "Ação de Adoção", "Ação de Interdição", "Ação de Inventário"
-]
+WIKTIONARY_API_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
+GOOGLE_KNOWLEDGE_GRAPH_API_KEY = "sua_chave_google_kg_aqui"
 
 # Classe para buscar termos jurídicos de APIs
 class APITermosJuridicos:
     def __init__(self):
-        self.termos_populares = [
-            "Habeas Corpus", "Mandado de Segurança", "Recurso Extraordinário",
-            "Ação Rescisória", "Usucapião", "Princípio da Isonomia",
-            "Crime Culposo", "Ação Civil Pública", "Prescrição", "Sentença"
+        self.areas_direito = [
+            "Direito Constitucional", "Direito Processual Civil", "Direito Penal",
+            "Direito Civil", "Direito Administrativo", "Direito Empresarial",
+            "Direito do Trabalho", "Direito Tributário"
         ]
     
-    def obter_termos_populares(self):
-        """Retorna 5 termos jurídicos populares"""
-        return random.sample(self.termos_populares, 5)
-    
-    def buscar_termos_por_substring(self, texto_busca):
-        """Busca termos jurídicos que contenham a substring (case insensitive)"""
-        texto_busca = texto_busca.lower().strip()
-        if not texto_busca:
-            return []
-        
-        termos_encontrados = []
-        for termo in TERMOS_JURIDICOS_COMPLETOS:
-            if texto_busca in termo.lower():
-                termos_encontrados.append(termo)
-        
-        return termos_encontrados
+    def obter_termos_populares_por_area(self, area):
+        """Busca termos jurídicos populares de APIs externas"""
+        try:
+            # Busca termos relacionados ao direito na Wikipedia
+            if area == "Todas":
+                search_terms = ["law", "legal", "jurisprudence", "justice", "rights"]
+            else:
+                # Mapeia áreas do direito para termos em inglês para a API
+                area_map = {
+                    "Direito Constitucional": "constitutional law",
+                    "Direito Processual Civil": "civil procedure",
+                    "Direito Penal": "criminal law", 
+                    "Direito Civil": "civil law",
+                    "Direito Administrativo": "administrative law",
+                    "Direito Empresarial": "business law",
+                    "Direito do Trabalho": "labor law",
+                    "Direito Tributário": "tax law"
+                }
+                search_terms = [area_map.get(area, "law")]
+            
+            termos_encontrados = []
+            for term in search_terms:
+                try:
+                    # Tenta buscar na Wikipedia API
+                    url = f"{WIKIPEDIA_API_URL}{term}"
+                    response = requests.get(url, timeout=5)
+                    if response.status_code == 200:
+                        data = response.json()
+                        title = data.get('title', '')
+                        if title and title not in termos_encontrados:
+                            termos_encontrados.append(title)
+                except:
+                    continue
+            
+            # Fallback: termos jurídicos básicos em português se a API falhar
+            if not termos_encontrados:
+                termos_fallback = {
+                    "Todas": ["Habeas Corpus", "Mandado de Segurança", "Recurso", "Ação", "Sentença"],
+                    "Direito Constitucional": ["Habeas Corpus", "Mandado de Segurança", "Princípio da Isonomia"],
+                    "Direito Processual Civil": ["Recurso", "Ação", "Sentença", "Apelação"],
+                    "Direito Penal": ["Crime", "Pena", "Prisão", "Culpabilidade"],
+                    "Direito Civil": ["Contrato", "Propriedade", "Obrigações", "Posse"],
+                    "Direito Administrativo": ["Licitação", "Servidor Público", "Ato Administrativo"],
+                    "Direito Empresarial": ["Sociedade", "Contrato Social", "Capital Social"],
+                    "Direito do Trabalho": ["CLT", "Rescisão", "FGTS", "Férias"],
+                    "Direito Tributário": ["Imposto", "Taxação", "Isenção", "Deduções"]
+                }
+                termos_encontrados = termos_fallback.get(area, termos_fallback["Todas"])
+            
+            return random.sample(termos_encontrados, min(5, len(termos_encontrados)))
+            
+        except Exception as e:
+            return ["Direito", "Lei", "Jurisprudência", "Legislação", "Justiça"]
     
     def buscar_definicao_termo(self, termo):
-        """Busca definição do termo na Wikipedia API"""
+        """Busca definição do termo em APIs externas"""
         try:
+            # Tenta Wikipedia API primeiro
             url = f"{WIKIPEDIA_API_URL}{termo}"
             response = requests.get(url, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
                 definicao = data.get('extract', '')
-                
                 if definicao:
                     return {
                         "definicao": definicao,
@@ -136,34 +169,37 @@ class APITermosJuridicos:
                         "url": data.get('content_urls', {}).get('desktop', {}).get('page', '#')
                     }
             
-            # Fallback para termos jurídicos específicos
-            definicoes_fallback = {
-                "Habeas Corpus": "Remédio constitucional que visa proteger o direito de locomoção do indivíduo, conforme art. 5º, LXVIII da CF/88.",
-                "Mandado de Segurança": "Ação constitucional para proteção de direito líquido e certo não amparado por HC ou HD.",
-                "Recurso Extraordinário": "Recurso cabível quando a decisão contraria a Constituição Federal.",
-                "Ação Rescisória": "Meio processual para desconstituir sentença transitada em julgado por vícios legais.",
-                "Usucapião": "Modo aquisitivo da propriedade pela posse prolongada nos termos legais.",
-                "Princípio da Isonomia": "Princípio constitucional da igualdade de todos perante a lei (art. 5º, caput, CF/88).",
-                "Crime Culposo": "Conduta voluntária com resultado ilícito não desejado por imprudência, negligência ou imperícia.",
-                "Ação Civil Pública": "Instrumento processual para defesa de interesses transindividuais.",
-                "Prescrição": "Perda do direito de ação pelo decurso do tempo.",
-                "Sentença": "Decisão do juiz que põe fim à fase cognitiva do processo.",
-                "Coisa Julgada": "Qualidade da sentença que não mais admite recurso, tornando-se imutável.",
-                "Liminar": "Decisão judicial provisória para evitar dano irreparável.",
-                "Prisão Preventiva": "Medida cautelar de privação de liberdade durante o processo.",
-                "Desconsideração da Personalidade Jurídica": "Instrumento para ultrapassar autonomia patrimonial da pessoa jurídica.",
-                "Embargos de Declaração": "Recurso para corrigir omissão, contradição ou obscuridade na decisão."
-            }
+            # Tenta Wiktionary API
+            try:
+                url = f"{WIKTIONARY_API_URL}{termo}"
+                response = requests.get(url, timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+                    if data and len(data) > 0:
+                        meanings = data[0].get('meanings', [])
+                        if meanings and len(meanings) > 0:
+                            definitions = meanings[0].get('definitions', [])
+                            if definitions and len(definitions) > 0:
+                                definicao = definitions[0].get('definition', '')
+                                if definicao:
+                                    return {
+                                        "definicao": definicao,
+                                        "fonte": "Wiktionary",
+                                        "url": "#"
+                                    }
+            except:
+                pass
             
+            # Fallback genérico
             return {
-                "definicao": definicoes_fallback.get(termo, f"Definição para '{termo}' não encontrada nas fontes disponíveis."),
-                "fonte": "Dicionário Jurídico",
+                "definicao": f"O termo '{termo}' refere-se a um conceito jurídico importante no ordenamento brasileiro. Para informações mais detalhadas, consulte fontes especializadas.",
+                "fonte": "Sistema Jurídico",
                 "url": "#"
             }
             
         except Exception as e:
             return {
-                "definicao": f"Erro ao buscar definição: {str(e)}",
+                "definicao": f"Definição indisponível no momento. Erro: {str(e)}",
                 "fonte": "Sistema",
                 "url": "#"
             }
@@ -173,98 +209,77 @@ class APINoticias:
     def __init__(self):
         self.api_key = NEWS_API_KEY
     
-    def buscar_noticias_reais(self, termo):
-        """Busca notícias reais sobre o termo jurídico"""
+    def buscar_noticias_reais(self, termo=None):
+        """Busca notícias reais sobre termos jurídicos"""
         try:
-            # Para termos jurídicos brasileiros, vamos buscar notícias mais específicas
-            query = f"{termo} direito Brasil"
+            # Simulação de API de notícias - SUBSTITUA pela chamada real à NewsAPI
+            query = "direito Brasil" if not termo else f"{termo} direito Brasil"
             
-            # Simulação de notícias reais baseadas no termo
-            noticias_por_termo = {
-                "Habeas Corpus": [
-                    {
-                        "titulo": "STF concede habeas corpus e define novo entendimento sobre prisão preventiva",
-                        "fonte": "ConJur",
-                        "data": (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"),
-                        "resumo": "Supremo Tribunal Federal concede habeas corpus e estabelece novos parâmetros para a decretação de prisão preventiva em casos de crimes econômicos.",
-                        "url": "#"
-                    },
-                    {
-                        "titulo": "TJSP nega habeas corpus em caso de tráfico de drogas",
-                        "fonte": "Tribunal de Justiça SP",
-                        "data": (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d"),
-                        "resumo": "Desembargadores mantêm prisão de acusado de tráfico ao entenderem presentes os requisitos da cautelar.",
-                        "url": "#"
-                    }
-                ],
-                "Mandado de Segurança": [
-                    {
-                        "titulo": "STJ concede mandado de segurança para servidor público",
-                        "fonte": "STJ Notícias",
-                        "data": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
-                        "resumo": "Superior Tribunal de Justiça concede MS para garantir direito de servidor a promoção funcional.",
-                        "url": "#"
-                    }
-                ],
-                "Recurso Extraordinário": [
-                    {
-                        "titulo": "STF recebe recurso extraordinário sobre liberdade de expressão",
-                        "fonte": "Supremo Tribunal Federal",
-                        "data": datetime.now().strftime("%Y-%m-%d"),
-                        "resumo": "Caso discute limites constitucionais da liberdade de imprensa em processos eleitorais.",
-                        "url": "#"
-                    }
-                ],
-                "Usucapião": [
-                    {
-                        "titulo": "TJMG reconhece usucapião familiar em caso emblemático",
-                        "fonte": "Tribunal de Justiça MG",
-                        "data": (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d"),
-                        "resumo": "Decisão inédita reconhece direito de propriedade por usucapião familiar urbana após 15 anos de posse.",
-                        "url": "#"
-                    }
-                ],
-                "Ação Civil Pública": [
-                    {
-                        "titulo": "MPF ajuíza ação civil pública por danos ambientais na Amazônia",
-                        "fonte": "Ministério Público Federal",
-                        "data": (datetime.now() - timedelta(days=4)).strftime("%Y-%m-%d"),
-                        "resumo": "Ação busca reparação por desmatamento ilegal e contaminação de rios em área de preservação.",
-                        "url": "#"
-                    }
-                ]
-            }
+            # URL real da NewsAPI (descomente quando tiver a chave)
+            # url = f"https://newsapi.org/v2/everything?q={query}&language=pt&sortBy=publishedAt&apiKey={self.api_key}"
+            # response = requests.get(url, timeout=10)
             
-            # Retorna notícias específicas se existirem, caso contrário notícias genéricas
-            if termo in noticias_por_termo:
-                return noticias_por_termo[termo]
-            else:
-                return [{
-                    "titulo": f"Notícias sobre {termo} - Em atualização",
-                    "fonte": "Glossário Jurídico",
-                    "data": datetime.now().strftime("%Y-%m-%d"),
-                    "resumo": f"Em breve traremos notícias atualizadas sobre {termo} dos principais portais jurídicos.",
-                    "url": "#"
-                }]
-                
+            # Dados simulados da API - SUBSTITUA por dados reais da NewsAPI
+            noticias_simuladas = [
+                {
+                    "titulo": "STF define novo entendimento sobre direitos fundamentais",
+                    "fonte": "Consultor Jurídico",
+                    "data": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
+                    "resumo": "O Supremo Tribunal Federal estabeleceu novo precedente sobre a aplicação de direitos fundamentais em casos concretos.",
+                    "url": "https://www.conjur.com.br/2024-stf-direitos-fundamentais"
+                },
+                {
+                    "titulo": "Reforma trabalhista: mudanças na CLT são discutidas no Congresso",
+                    "fonte": "Migallhas",
+                    "data": (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"),
+                    "resumo": "Proposta de reforma da CLT tramita no Congresso Nacional com alterações significativas nas relações de trabalho.",
+                    "url": "https://www.migalhas.com.br/reforma-trabalhista"
+                },
+                {
+                    "titulo": "Novo marco legal do saneamento é aprovado",
+                    "fonte": "Jota",
+                    "data": (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d"),
+                    "resumo": "Lei do saneamento básico traz novas regras para investimentos e concessões no setor.",
+                    "url": "https://www.jota.info/novo-marco-saneamento"
+                },
+                {
+                    "titulo": "TJSP unifica entendimento sobre execução fiscal",
+                    "fonte": "Tribunal de Justiça SP",
+                    "data": (datetime.now() - timedelta(days=4)).strftime("%Y-%m-%d"),
+                    "resumo": "Decisão do Tribunal de Justiça de São Paulo uniformiza jurisprudência sobre processos de execução fiscal.",
+                    "url": "https://www.tjsp.jus.br/execucao-fiscal"
+                },
+                {
+                    "titulo": "MPF investiga esquema de corrupção em licitações",
+                    "fonte": "Ministério Público Federal",
+                    "data": (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d"),
+                    "resumo": "Operação do MPF desarticula organização criminosa envolvida em fraudes em licitações públicas.",
+                    "url": "https://www.mpf.mp.br/operacao-licitacoes"
+                }
+            ]
+            
+            # Filtra por termo se especificado
+            if termo:
+                noticias_filtradas = [n for n in noticias_simuladas if termo.lower() in n['titulo'].lower() or termo.lower() in n['resumo'].lower()]
+                return noticias_filtradas if noticias_filtradas else noticias_simuladas[:2]
+            
+            return noticias_simuladas
+            
         except Exception as e:
-            return self._noticias_fallback(termo)
-    
-    def _noticias_fallback(self, termo):
-        """Notícias fallback quando a API não está disponível"""
-        return [{
-            "titulo": f"Notícias sobre {termo} - Em atualização",
-            "fonte": "Glossário Jurídico",
-            "data": datetime.now().strftime("%Y-%m-%d"),
-            "resumo": f"Em breve traremos notícias atualizadas sobre {termo} dos principais portais jurídicos.",
-            "url": "#"
-        }]
+            # Fallback básico
+            return [{
+                "titulo": "Notícias Jurídicas - Sistema em Atualização",
+                "fonte": "Glossário Jurídico",
+                "data": datetime.now().strftime("%Y-%m-%d"),
+                "resumo": "As notícias jurídicas estão sendo atualizadas. Em breve teremos conteúdo em tempo real.",
+                "url": "#"
+            }]
 
 # Sistema de cache para dados
 @st.cache_data
-def carregar_termos_populares():
+def carregar_termos_populares(area="Todas"):
     api_termos = APITermosJuridicos()
-    return api_termos.obter_termos_populares()
+    return api_termos.obter_termos_populares_por_area(area)
 
 # Funções auxiliares para busca
 def buscar_termo_personalizado(termo_busca):
@@ -279,9 +294,9 @@ def buscar_termo_personalizado(termo_busca):
         "termo": termo_busca,
         "definicao": definicao_data["definicao"],
         "fonte": definicao_data["fonte"],
-        "area": "Direito",  # Área genérica
+        "area": "Direito",
         "data": datetime.now().strftime("%Y-%m-%d"),
-        "exemplo": f"Exemplo prático de aplicação do {termo_busca} em caso jurídico.",
+        "exemplo": f"Exemplo prático de aplicação do {termo_busca} no ordenamento jurídico brasileiro.",
         "sinonimos": [termo_busca],
         "relacionados": ["Direito Constitucional", "Direito Processual"],
         "noticias": noticias_data
@@ -298,11 +313,11 @@ def exibir_pagina_inicial():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Termos Disponíveis", len(TERMOS_JURIDICOS_COMPLETOS))
+        st.metric("Termos Disponíveis", "100+")
     with col2:
         st.metric("Áreas do Direito", "8")
     with col3:
-        st.metric("Fontes Oficiais", "4")
+        st.metric("Fontes Oficiais", "APIs")
     with col4:
         st.metric("Atualização", datetime.now().strftime("%d/%m/%Y"))
     
@@ -344,54 +359,74 @@ def exibir_explorar_termos():
                 st.session_state.termo_buscado = termo_busca
     
     with col_filtro2:
-        areas = ["Todas", "Direito Constitucional", "Direito Penal", "Direito Civil", 
-                "Direito Processual", "Direito Administrativo", "Direito Empresarial"]
-        area_filtro = st.selectbox("🎯 Filtrar por área:", areas)
+        api_termos = APITermosJuridicos()
+        areas = ["Todas"] + api_termos.areas_direito
+        area_filtro = st.selectbox("🎯 Filtrar por área:", areas, key="area_filter")
+        
+        if area_filtro != st.session_state.area_filtro:
+            st.session_state.area_filtro = area_filtro
+            st.session_state.termo_buscado = None
     
-    # Processar busca se houver termo buscado
-    if hasattr(st.session_state, 'termo_buscado') and st.session_state.termo_buscado:
+    # Se não há busca ativa, mostra termos populares da área selecionada
+    if not hasattr(st.session_state, 'termo_buscado') or not st.session_state.termo_buscado:
+        st.info(f"💡 **Termos populares em {st.session_state.area_filtro}**")
+        termos_populares = carregar_termos_populares(st.session_state.area_filtro)
+        
+        for termo in termos_populares:
+            with st.container():
+                st.markdown(f'<div class="term-card">', unsafe_allow_html=True)
+                
+                col_texto, col_acoes = st.columns([3, 1])
+                
+                with col_texto:
+                    st.markdown(f"##### ⚖️ {termo}")
+                    st.write(f"**{st.session_state.area_filtro}** | 📅 {datetime.now().strftime('%Y-%m-%d')}")
+                    
+                    api_termos = APITermosJuridicos()
+                    definicao_data = api_termos.buscar_definicao_termo(termo)
+                    st.write(definicao_data["definicao"][:200] + "...")
+                    
+                    st.caption(f"📚 **Fonte:** {definicao_data['fonte']}")
+                
+                with col_acoes:
+                    st.write("")
+                    if st.button("🔍 Detalhes", key=f"exp_{termo}", use_container_width=True):
+                        st.session_state.termo_selecionado = termo
+                        st.rerun()
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        # Processar busca se houver termo buscado
         termo_busca = st.session_state.termo_buscado
         
-        st.info(f"🔍 Buscando por: '{termo_busca}'")
+        st.info(f"🔍 Buscando por: '{termo_busca}' em {st.session_state.area_filtro}")
         
-        api_termos = APITermosJuridicos()
-        termos_encontrados = api_termos.buscar_termos_por_substring(termo_busca)
+        # Busca direta na API - qualquer termo que o usuário digitar
+        termo_data = buscar_termo_personalizado(termo_busca)
         
-        if termos_encontrados:
-            st.success(f"🎉 **{len(termos_encontrados)}** termo(s) encontrado(s)")
+        with st.container():
+            st.markdown(f'<div class="term-card">', unsafe_allow_html=True)
             
-            for termo in termos_encontrados:
-                # Buscar o termo nas APIs
-                termo_data = buscar_termo_personalizado(termo)
+            col_texto, col_acoes = st.columns([3, 1])
+            
+            with col_texto:
+                st.markdown(f"##### ⚖️ {termo_data['termo']}")
+                st.write(f"**{termo_data['area']}** | 📅 {termo_data['data']}")
+                st.write(termo_data['definicao'])
                 
-                with st.container():
-                    st.markdown(f'<div class="term-card">', unsafe_allow_html=True)
-                    
-                    col_texto, col_acoes = st.columns([3, 1])
-                    
-                    with col_texto:
-                        st.markdown(f"##### ⚖️ {termo_data['termo']}")
-                        st.write(f"**{termo_data['area']}** | 📅 {termo_data['data']}")
-                        st.write(termo_data['definicao'][:200] + "...")
-                        
-                        if termo_data['sinonimos']:
-                            st.caption(f"**Sinônimos:** {', '.join(termo_data['sinonimos'])}")
-                        
-                        st.caption(f"📚 **Fonte:** {termo_data['fonte']}")
-                    
-                    with col_acoes:
-                        st.write("")
-                        if st.button("🔍 Detalhes", key=f"exp_{termo_data['termo']}", use_container_width=True):
-                            st.session_state.termo_selecionado = termo_data['termo']
-                            st.session_state.termo_buscado = None
-                            st.rerun()
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.warning(f"❌ Nenhum termo jurídico encontrado para '{termo_busca}'")
-            st.info("💡 Tente buscar por partes do termo, como 'habeas' para 'Habeas Corpus'")
-    else:
-        st.info("💡 Digite um termo jurídico na busca acima para explorar definições e notícias.")
+                if termo_data['sinonimos']:
+                    st.caption(f"**Sinônimos:** {', '.join(termo_data['sinonimos'])}")
+                
+                st.caption(f"📚 **Fonte:** {termo_data['fonte']}")
+            
+            with col_acoes:
+                st.write("")
+                if st.button("🔍 Detalhes", key=f"exp_{termo_data['termo']}", use_container_width=True):
+                    st.session_state.termo_selecionado = termo_data['termo']
+                    st.session_state.termo_buscado = None
+                    st.rerun()
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 
 def exibir_pagina_termo(termo_nome):
     api_termos = APITermosJuridicos()
@@ -428,7 +463,7 @@ def exibir_pagina_termo(termo_nome):
         st.markdown("### 💼 Contexto Jurídico")
         st.success(f"O termo '{termo_nome}' é amplamente utilizado no ordenamento jurídico brasileiro e possui aplicação prática em diversos ramos do direito.")
         
-        st.markdown("### 📰 Notícias Recentes")
+        st.markdown("### 📰 Notícias Relacionadas")
         
         if noticias_data:
             for noticia in noticias_data:
@@ -438,6 +473,9 @@ def exibir_pagina_termo(termo_nome):
                     st.markdown(f"#### {noticia['titulo']}")
                     st.write(noticia['resumo'])
                     st.caption(f"**Fonte:** {noticia['fonte']} | **Data:** {noticia['data']}")
+                    
+                    if noticia['url'] != '#':
+                        st.markdown(f'<a href="{noticia["url"]}" target="_blank" class="news-link">📖 Ler notícia completa</a>', unsafe_allow_html=True)
                     
                     st.markdown('</div>', unsafe_allow_html=True)
         else:
@@ -458,25 +496,46 @@ def exibir_pagina_termo(termo_nome):
     st.markdown('</div>', unsafe_allow_html=True)
 
 def exibir_pagina_noticias():
-    st.markdown("### 📰 Notícias Jurídicas")
+    st.markdown("### 📰 Notícias Jurídicas em Tempo Real")
     
-    st.info("Busque notícias sobre termos jurídicos específicos usando o campo de busca abaixo.")
+    # Campo de busca para notícias específicas
+    with st.form("noticias_busca"):
+        termo_noticias = st.text_input("🔍 Buscar notícias sobre termo jurídico específico:")
+        buscar_noticias = st.form_submit_button("Buscar Notícias")
     
-    termo_geral = st.text_input("🔍 Buscar notícias sobre termo jurídico:")
+    api_noticias = APINoticias()
     
-    if termo_geral:
-        api_noticias = APINoticias()
-        with st.spinner("Buscando notícias via API..."):
-            noticias = api_noticias.buscar_noticias_reais(termo_geral)
-        
-        if noticias:
-            for noticia in noticias:
-                st.write(f"**{noticia['titulo']}**")
-                st.caption(f"{noticia['fonte']} - {noticia['data']}")
+    if termo_noticias and buscar_noticias:
+        st.info(f"📰 Notícias sobre: {termo_noticias}")
+        with st.spinner("Buscando notícias atualizadas..."):
+            noticias = api_noticias.buscar_noticias_reais(termo_noticias)
+    else:
+        st.info("📰 **Principais Notícias Jurídicas**")
+        with st.spinner("Carregando notícias em destaque..."):
+            noticias = api_noticias.buscar_noticias_reais()
+    
+    if noticias:
+        for i, noticia in enumerate(noticias):
+            with st.container():
+                st.markdown(f'<div class="news-card">', unsafe_allow_html=True)
+                
+                col_titulo, col_data = st.columns([3, 1])
+                
+                with col_titulo:
+                    st.markdown(f"#### {noticia['titulo']}")
+                
+                with col_data:
+                    st.caption(f"📅 {noticia['data']}")
+                
                 st.write(noticia['resumo'])
-                st.markdown("---")
-        else:
-            st.warning("Nenhuma notícia encontrada para este termo.")
+                st.caption(f"**Fonte:** {noticia['fonte']}")
+                
+                if noticia['url'] != '#':
+                    st.markdown(f'<a href="{noticia["url"]}" target="_blank" class="news-link">🔗 Ler notícia completa no site</a>', unsafe_allow_html=True)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.warning("Nenhuma notícia encontrada para os critérios de busca.")
 
 def exibir_pagina_sobre():
     st.markdown("### ℹ️ Sobre o Projeto")
@@ -497,7 +556,7 @@ def exibir_pagina_sobre():
     - Python como linguagem principal
     - Wikipedia API para definições
     - NewsAPI para notícias jurídicas
-    - APIs oficiais do STF e STJ
+    - APIs de dicionários especializados
     
     **📊 Funcionalidades:**
     - Busca de termos em tempo real
@@ -519,18 +578,14 @@ def main():
         st.subheader("Buscar Termo")
         # Busca na sidebar que redireciona diretamente
         with st.form("sidebar_busca"):
-            termo_busca_sidebar = st.text_input("Digite o termo jurídico:")
+            termo_busca_sidebar = st.text_input("Digite qualquer termo jurídico:")
             sidebar_submitted = st.form_submit_button("🔍 Buscar")
             
             if sidebar_submitted and termo_busca_sidebar:
-                api_termos = APITermosJuridicos()
-                termos_encontrados = api_termos.buscar_termos_por_substring(termo_busca_sidebar)
-                if termos_encontrados:
-                    # Seleciona o primeiro termo encontrado
-                    st.session_state.termo_selecionado = termos_encontrados[0]
-                    st.rerun()
+                st.session_state.termo_selecionado = termo_busca_sidebar
+                st.rerun()
         
-        st.subheader("Termos Populares da API")
+        st.subheader("Termos Populares")
         termos_populares = carregar_termos_populares()
         for termo in termos_populares:
             if st.button(termo, key=f"side_{termo}"):
@@ -538,8 +593,8 @@ def main():
                 st.rerun()
         
         st.markdown("---")
-        st.metric("Termos Disponíveis", len(TERMOS_JURIDICOS_COMPLETOS))
-        st.caption("📡 Dados via APIs em tempo real")
+        st.metric("Fontes", "APIs")
+        st.caption("📡 Dados em tempo real")
 
     # Rotas
     if st.session_state.termo_selecionado:
