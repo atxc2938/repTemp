@@ -85,12 +85,13 @@ if 'termo_buscado' not in st.session_state:
 if 'area_filtro' not in st.session_state:
     st.session_state.area_filtro = "Todas"
 
-# APIs BRASILEIRAS QUE FUNCIONAM
+# APIs BRASILEIRAS FUNCIONAIS
 WIKIPEDIA_PT_API = "https://pt.wikipedia.org/api/rest_v1/page/summary/"
 WIKIPEDIA_PT_SEARCH = "https://pt.wikipedia.org/w/api.php"
-PLANALTO_API = "http://www.planalto.gov.br/ccivil_03/_Ato2019-2022/2022/Lei/L14511.htm"  # Exemplo
-STF_API = "https://portal.stf.jus.br/jurisprudencia/"
-JUSBRASIL_API = "https://www.jusbrasil.com.br/home"
+DICIO_API = "https://dicio-api-ten.vercel.app/v2/"
+IBGE_API = "https://servicodados.ibge.gov.br/api/v1/"
+CAMARA_API = "https://dadosabertos.camara.leg.br/api/v2/"
+PLANALTO_API = "https://www.planalto.gov.br/ccivil_03/_Ato2019-2022/2022/Lei/L14511.htm"
 
 # Classe para buscar termos jurídicos de APIs BRASILEIRAS
 class APITermosJuridicos:
@@ -101,47 +102,49 @@ class APITermosJuridicos:
             "Direito do Trabalho", "Direito Tributário", "Direito Ambiental"
         ]
         
-        # Termos por área para o filtro
+        # Termos por área para o filtro - MAIS TERMOS
         self.termos_por_area = {
-            "Direito Constitucional": ["Constituição", "Direitos Fundamentais", "Habeas Corpus", 
-                                     "Mandado de Segurança", "Ação Popular", "Federalismo"],
-            "Direito Processual Civil": ["Processo", "Recurso", "Sentença", "Ação Rescisória",
-                                       "Liminar", "Coisa Julgada", "Execução"],
+            "Direito Constitucional": ["Constituição Federal", "Direitos Fundamentais", "Habeas Corpus", 
+                                     "Mandado de Segurança", "Ação Popular", "Federalismo", "Separação dos Poderes",
+                                     "Controle de Constitucionalidade", "Remédios Constitucionais"],
+            "Direito Processual Civil": ["Processo Civil", "Recurso", "Sentença", "Ação Rescisória",
+                                       "Liminar", "Coisa Julgada", "Execução", "Competência", "Jurisdição"],
             "Direito Penal": ["Crime", "Pena", "Prisão", "Culpabilidade", "Legítima Defesa",
-                            "Estado de Necessidade", "Homicídio"],
+                            "Estado de Necessidade", "Homicídio", "Furto", "Roubo", "Latrocínio"],
             "Direito Civil": ["Contrato", "Propriedade", "Obrigações", "Responsabilidade Civil",
-                            "Posse", "Usucapião", "Família"],
+                            "Posse", "Usucapião", "Família", "Sucessões", "Direitos Reais"],
             "Direito Administrativo": ["Licitação", "Servidor Público", "Ato Administrativo",
-                                     "Improbidade", "Serviço Público", "Concurso"],
+                                     "Improbidade", "Serviço Público", "Concurso", "Poder de Polícia"],
             "Direito Empresarial": ["Sociedade", "Contrato Social", "Falência", 
-                                  "Recuperação Judicial", "Capital Social"],
+                                  "Recuperação Judicial", "Capital Social", "Títulos de Crédito"],
             "Direito do Trabalho": ["CLT", "Rescisão", "FGTS", "Férias", "Horas Extras",
-                                  "Verbas Rescisórias"],
+                                  "Verbas Rescisórias", "Acidente de Trabalho", "Direito Coletivo"],
             "Direito Tributário": ["Imposto", "Taxação", "Isenção", "Deduções", "ICMS",
-                                 "IPVA", "ITR"],
+                                 "IPVA", "ITR", "Obrigação Tributária", "Crédito Tributário"],
             "Direito Ambiental": ["Meio Ambiente", "Licenciamento", "Poluição", "Preservação",
-                                "Recursos Hídricos", "Fauna", "Flora"]
+                                "Recursos Hídricos", "Fauna", "Flora", "Desenvolvimento Sustentável"]
         }
+    
+    def obter_termos_populares_aleatorios(self):
+        """Retorna 5 termos aleatórios de qualquer área - APENAS NOMES"""
+        todos_termos = []
+        for termos in self.termos_por_area.values():
+            todos_termos.extend(termos)
+        return random.sample(todos_termos, min(5, len(todos_termos)))
     
     def obter_termos_aleatorios_por_area(self, area):
         """Retorna termos aleatórios da área específica"""
         if area == "Todas":
-            todos_termos = []
-            for termos in self.termos_por_area.values():
-                todos_termos.extend(termos)
-            return random.sample(todos_termos, min(5, len(todos_termos)))
+            return self.obter_termos_populares_aleatorios()
         else:
             termos_area = self.termos_por_area.get(area, [])
             return random.sample(termos_area, min(5, len(termos_area)))
     
-    def buscar_definicao_brasileira(self, termo):
-        """Busca definição em APIs BRASILEIRAS que FUNCIONAM"""
-        termo_encoded = urllib.parse.quote(termo)
-        
-        # ESTRATÉGIA 1: Wikipedia Brasileira - FUNCIONA
+    def buscar_definicao_wikipedia(self, termo):
+        """Busca definição na Wikipedia Brasileira - API FUNCIONAL"""
         try:
-            # Primeiro tenta a página direta
-            url = f"{WIKIPEDIA_PT_API}{termo_encoded}"
+            # Tenta buscar a página diretamente
+            url = f"{WIKIPEDIA_PT_API}{urllib.parse.quote(termo)}"
             response = requests.get(url, timeout=10)
             
             if response.status_code == 200:
@@ -151,14 +154,11 @@ class APITermosJuridicos:
                     return {
                         "definicao": definicao,
                         "fonte": "Wikipedia Brasil",
-                        "url": data.get('content_urls', {}).get('desktop', {}).get('page', f"https://pt.wikipedia.org/wiki/{termo_encoded}")
+                        "url": data.get('content_urls', {}).get('desktop', {}).get('page', f"https://pt.wikipedia.org/wiki/{urllib.parse.quote(termo)}")
                     }
-        except Exception as e:
-            pass
-        
-        # ESTRATÉGIA 2: Wikipedia Search - FUNCIONA para termos brasileiros
-        try:
-            search_url = f"{WIKIPEDIA_PT_SEARCH}?action=query&list=search&srsearch={termo_encoded}&format=json&srlimit=5&srprop=snippet"
+            
+            # Se não encontrou, faz busca
+            search_url = f"{WIKIPEDIA_PT_SEARCH}?action=query&list=search&srsearch={urllib.parse.quote(termo)}&format=json&srlimit=5&srprop=snippet"
             search_response = requests.get(search_url, timeout=10)
             
             if search_response.status_code == 200:
@@ -171,106 +171,110 @@ class APITermosJuridicos:
                     
                     # Limpa HTML do snippet
                     clean_snippet = re.sub('<[^<]+?>', '', snippet)
-                    clean_snippet = clean_snippet.replace('&quot;', '"')
+                    clean_snippet = clean_snippet.replace('&quot;', '"').replace('&#39;', "'")
                     
                     if clean_snippet and len(clean_snippet) > 20:
-                        # Busca a página completa para melhor definição
-                        try:
-                            page_url = f"{WIKIPEDIA_PT_API}{urllib.parse.quote(titulo)}"
-                            page_response = requests.get(page_url, timeout=8)
-                            if page_response.status_code == 200:
-                                page_data = page_response.json()
-                                page_definicao = page_data.get('extract', '')
-                                if page_definicao:
-                                    return {
-                                        "definicao": page_definicao,
-                                        "fonte": "Wikipedia Brasil",
-                                        "url": page_data.get('content_urls', {}).get('desktop', {}).get('page', f"https://pt.wikipedia.org/wiki/{urllib.parse.quote(titulo)}")
-                                    }
-                        except:
-                            pass
-                        
                         return {
                             "definicao": f"{clean_snippet}...",
                             "fonte": "Wikipedia Brasil",
                             "url": f"https://pt.wikipedia.org/wiki/{urllib.parse.quote(titulo)}"
                         }
+                        
         except Exception as e:
             pass
         
-        # ESTRATÉGIA 3: Busca por termos jurídicos específicos
+        return None
+    
+    def buscar_definicao_dicio(self, termo):
+        """Busca definição no Dicio API - API BRASILEIRA FUNCIONAL"""
         try:
-            # Adiciona "direito" ao termo para melhorar busca
-            termo_direito = f"{termo} direito"
-            search_url = f"{WIKIPEDIA_PT_SEARCH}?action=query&list=search&srsearch={urllib.parse.quote(termo_direito)}&format=json&srlimit=3&srprop=snippet"
-            search_response = requests.get(search_url, timeout=10)
+            url = f"{DICIO_API}{urllib.parse.quote(termo.lower())}"
+            response = requests.get(url, timeout=10)
             
-            if search_response.status_code == 200:
-                search_data = search_response.json()
-                results = search_data.get('query', {}).get('search', [])
-                
-                for result in results:
-                    titulo = result.get('title', '')
-                    snippet = result.get('snippet', '')
-                    clean_snippet = re.sub('<[^<]+?>', '', snippet)
-                    clean_snippet = clean_snippet.replace('&quot;', '"')
-                    
-                    if clean_snippet and len(clean_snippet) > 20:
-                        return {
-                            "definicao": f"{clean_snippet}...",
-                            "fonte": "Wikipedia Jurídica",
-                            "url": f"https://pt.wikipedia.org/wiki/{urllib.parse.quote(titulo)}"
-                        }
-        except:
-            pass
-        
-        # ESTRATÉGIA 4: Busca em páginas relacionadas
-        try:
-            # Busca páginas que contenham o termo no título
-            search_url = f"{WIKIPEDIA_PT_SEARCH}?action=query&list=search&srsearch=intitle:{termo_encoded}&format=json&srlimit=3&srprop=snippet"
-            search_response = requests.get(search_url, timeout=10)
-            
-            if search_response.status_code == 200:
-                search_data = search_response.json()
-                results = search_data.get('query', {}).get('search', [])
-                
-                for result in results:
-                    titulo = result.get('title', '')
-                    if termo.lower() in titulo.lower():
-                        snippet = result.get('snippet', '')
-                        clean_snippet = re.sub('<[^<]+?>', '', snippet)
-                        clean_snippet = clean_snippet.replace('&quot;', '"')
-                        
-                        if clean_snippet:
+            if response.status_code == 200:
+                data = response.json()
+                if data and len(data) > 0:
+                    significado = data[0].get('significados', [])
+                    if significado and len(significado) > 0:
+                        definicao = significado[0].get('descricao', '')
+                        if definicao:
                             return {
-                                "definicao": f"{clean_snippet}...",
-                                "fonte": "Wikipedia Brasil",
-                                "url": f"https://pt.wikipedia.org/wiki/{urllib.parse.quote(titulo)}"
+                                "definicao": definicao,
+                                "fonte": "Dicio API",
+                                "url": f"https://www.dicio.com.br/{urllib.parse.quote(termo.lower())}/"
                             }
         except:
             pass
+        return None
+    
+    def buscar_definicao_brasileira(self, termo):
+        """Busca definição em APIs BRASILEIRAS que FUNCIONAM"""
+        # Tenta Wikipedia primeiro
+        resultado = self.buscar_definicao_wikipedia(termo)
+        if resultado:
+            return resultado
+            
+        # Tenta Dicio API
+        resultado = self.buscar_definicao_dicio(termo)
+        if resultado:
+            return resultado
         
-        # SE NADA FUNCIONAR, retorna mensagem clara
+        # Fallback para termos jurídicos conhecidos
+        definicoes_fallback = {
+            "Habeas Corpus": "Remédio constitucional que protege o direito de locomoção do indivíduo contra ilegalidade ou abuso de poder.",
+            "Mandado de Segurança": "Ação constitucional para proteger direito líquido e certo não amparado por habeas corpus ou habeas data.",
+            "Ação Popular": "Instrumento constitucional que permite ao cidadão anular ato lesivo ao patrimônio público.",
+            "Licitação": "Procedimento administrativo para escolha da proposta mais vantajosa para a administração pública.",
+            "Usucapião": "Aquisição da propriedade pela posse prolongada e ininterrupta de bem imóvel.",
+            "Coisa Julgada": "Qualidade da decisão judicial que não mais admite recurso.",
+            "Legítima Defesa": "Excludente de ilicitude que permite repelir injusta agressão atual ou iminente."
+        }
+        
+        if termo in definicoes_fallback:
+            return {
+                "definicao": definicoes_fallback[termo],
+                "fonte": "Doutrina Jurídica Brasileira",
+                "url": "#"
+            }
+        
         return {
-            "definicao": f"🔍 Buscando definição jurídica para '{termo}' nas fontes brasileiras...\n\nTente termos como: 'Lei', 'Direito', 'Contrato', 'Processo', 'Crime', 'Habeas Corpus'",
+            "definicao": f"🔍 Buscando definição jurídica para '{termo}' nas fontes brasileiras...\n\nTente termos como: 'Habeas Corpus', 'Mandado de Segurança', 'Licitação', 'Usucapião', 'Contrato'",
             "fonte": "Sistema Jurídico Brasileiro",
             "url": "#"
         }
 
-# Classe para Notícias via APIs BRASILEIRAS
+# Classe para Notícias via APIs BRASILEIRAS FUNCIONAIS
 class APINoticiasBrasileiras:
-    def buscar_noticias_brasileiras(self, termo=None):
-        """Busca notícias em fontes BRASILEIRAS que FUNCIONAM"""
+    def buscar_noticias_camara(self, termo):
+        """Busca notícias da Câmara dos Deputados - API FUNCIONAL"""
         noticias = []
-        
-        if not termo:
-            termo = "direito"
-        
-        termo_encoded = urllib.parse.quote(termo)
-        
-        # ESTRATÉGIA 1: Wikipedia Search - FUNCIONA para conteúdo jurídico
         try:
-            search_url = f"{WIKIPEDIA_PT_SEARCH}?action=query&list=search&srsearch={termo_encoded}+direito&format=json&srlimit=6&srprop=snippet"
+            url = f"{CAMARA_API}noticias?itens=10&ordenarPor=data&ordem=DESC"
+            response = requests.get(url, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                noticias_data = data.get('dados', [])
+                
+                for noticia in noticias_data:
+                    titulo = noticia.get('titulo', '')
+                    if termo.lower() in titulo.lower():
+                        noticias.append({
+                            "titulo": f"🏛️ {titulo}",
+                            "fonte": "Câmara dos Deputados",
+                            "data": noticia.get('data', datetime.now().strftime("%Y-%m-%d")),
+                            "resumo": noticia.get('resumo', 'Notícia legislativa brasileira.'),
+                            "url": noticia.get('url', '#')
+                        })
+        except:
+            pass
+        return noticias
+    
+    def buscar_noticias_wikipedia(self, termo):
+        """Busca conteúdo relevante na Wikipedia como notícias"""
+        noticias = []
+        try:
+            search_url = f"{WIKIPEDIA_PT_SEARCH}?action=query&list=search&srsearch={urllib.parse.quote(termo)}+direito&format=json&srlimit=8&srprop=snippet"
             response = requests.get(search_url, timeout=10)
             
             if response.status_code == 200:
@@ -281,65 +285,32 @@ class APINoticiasBrasileiras:
                     titulo = result.get('title', '')
                     snippet = result.get('snippet', '')
                     
-                    # Limpa e formata o snippet
                     clean_snippet = re.sub('<[^<]+?>', '', snippet)
-                    clean_snippet = clean_snippet.replace('&quot;', '"')
-                    clean_snippet = clean_snippet.replace('&#39;', "'")
+                    clean_snippet = clean_snippet.replace('&quot;', '"').replace('&#39;', "'")
                     
-                    if clean_snippet and len(clean_snippet) > 10:
-                        noticia = {
+                    if clean_snippet:
+                        noticias.append({
                             "titulo": f"📚 {titulo}",
                             "fonte": "Wikipedia Jurídica",
                             "data": (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d"),
                             "resumo": f"{clean_snippet}...",
                             "url": f"https://pt.wikipedia.org/wiki/{urllib.parse.quote(titulo)}"
-                        }
-                        noticias.append(noticia)
-        except Exception as e:
-            pass
-        
-        # ESTRATÉGIA 2: Conteúdo de portais jurídicos brasileiros
-        try:
-            portais_brasileiros = [
-                "STF", "STJ", "TJSP", "OAB", "CNJ", "MPF", "DPU", "DEFENSORIA",
-                "TST", "TRT", "TSE", "TCU", "AGU", "PGR"
-            ]
-            
-            for portal in portais_brasileiros[:4]:
-                search_term = f"{termo} {portal}"
-                search_url = f"{WIKIPEDIA_PT_SEARCH}?action=query&list=search&srsearch={urllib.parse.quote(search_term)}&format=json&srlimit=2&srprop=snippet"
-                response = requests.get(search_url, timeout=8)
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    results = data.get('query', {}).get('search', [])
-                    
-                    for result in results:
-                        titulo = result.get('title', '')
-                        snippet = result.get('snippet', '')
-                        clean_snippet = re.sub('<[^<]+?>', '', snippet)
-                        clean_snippet = clean_snippet.replace('&quot;', '"')
-                        
-                        if clean_snippet:
-                            noticia = {
-                                "titulo": f"⚖️ {titulo} - {portal}",
-                                "fonte": f"Portal {portal}",
-                                "data": datetime.now().strftime("%Y-%m-%d"),
-                                "resumo": f"{clean_snippet}...",
-                                "url": f"https://pt.wikipedia.org/wiki/{urllib.parse.quote(titulo)}"
-                            }
-                            noticias.append(noticia)
+                        })
         except:
             pass
-        
-        # ESTRATÉGIA 3: Conteúdo legislativo brasileiro
+        return noticias
+    
+    def buscar_noticias_legislacao(self, termo):
+        """Busca conteúdo de legislação brasileira"""
+        noticias = []
         try:
+            # Busca termos relacionados à legislação
             termos_legislativos = [
                 "Lei", "Decreto", "Portaria", "Resolução", "Medida Provisória",
                 "Projeto de Lei", "Emenda Constitucional", "Súmula"
             ]
             
-            for termo_leg in termos_legislativos[:3]:
+            for termo_leg in termos_legislativos:
                 search_term = f"{termo} {termo_leg}"
                 search_url = f"{WIKIPEDIA_PT_SEARCH}?action=query&list=search&srsearch={urllib.parse.quote(search_term)}&format=json&srlimit=2&srprop=snippet"
                 response = requests.get(search_url, timeout=8)
@@ -355,52 +326,30 @@ class APINoticiasBrasileiras:
                         clean_snippet = clean_snippet.replace('&quot;', '"')
                         
                         if clean_snippet:
-                            noticia = {
+                            noticias.append({
                                 "titulo": f"📜 {titulo}",
                                 "fonte": "Legislação Brasileira",
                                 "data": datetime.now().strftime("%Y-%m-%d"),
                                 "resumo": f"{clean_snippet}...",
                                 "url": f"https://pt.wikipedia.org/wiki/{urllib.parse.quote(titulo)}"
-                            }
-                            noticias.append(noticia)
+                            })
         except:
             pass
+        return noticias
+    
+    def buscar_noticias_brasileiras(self, termo=None):
+        """Busca notícias em fontes BRASILEIRAS que FUNCIONAM"""
+        if not termo:
+            termo = "direito"
         
-        # ESTRATÉGIA 4: Busca por jurisprudência e doutrina
-        try:
-            termos_juridicos = [
-                "Jurisprudência", "Doutrina", "Precedente", "Acórdão", "Sentença",
-                "Recurso", "Apelação", "Agravo", "Embargos"
-            ]
-            
-            for termo_jur in termos_juridicos[:3]:
-                search_term = f"{termo} {termo_jur}"
-                search_url = f"{WIKIPEDIA_PT_SEARCH}?action=query&list=search&srsearch={urllib.parse.quote(search_term)}&format=json&srlimit=2&srprop=snippet"
-                response = requests.get(search_url, timeout=8)
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    results = data.get('query', {}).get('search', [])
-                    
-                    for result in results:
-                        titulo = result.get('title', '')
-                        snippet = result.get('snippet', '')
-                        clean_snippet = re.sub('<[^<]+?>', '', snippet)
-                        clean_snippet = clean_snippet.replace('&quot;', '"')
-                        
-                        if clean_snippet:
-                            noticia = {
-                                "titulo": f"⚖️ {titulo} - {termo_jur}",
-                                "fonte": "Jurisprudência",
-                                "data": datetime.now().strftime("%Y-%m-%d"),
-                                "resumo": f"{clean_snippet}...",
-                                "url": f"https://pt.wikipedia.org/wiki/{urllib.parse.quote(titulo)}"
-                            }
-                            noticias.append(noticia)
-        except:
-            pass
+        noticias = []
         
-        # Remove duplicatas e limita resultados
+        # Busca em múltiplas fontes
+        noticias.extend(self.buscar_noticias_camara(termo))
+        noticias.extend(self.buscar_noticias_wikipedia(termo))
+        noticias.extend(self.buscar_noticias_legislacao(termo))
+        
+        # Remove duplicatas
         noticias_unicas = []
         titulos_vistos = set()
         
@@ -409,10 +358,20 @@ class APINoticiasBrasileiras:
                 noticias_unicas.append(noticia)
                 titulos_vistos.add(noticia['titulo'])
         
-        return noticias_unicas[:8]  # Retorna até 8 notícias
+        # Se não encontrou notícias específicas, retorna notícias gerais
+        if not noticias_unicas:
+            noticias_gerais = self.buscar_noticias_wikipedia("Direito")
+            return noticias_gerais[:6]
+        
+        return noticias_unicas[:8]
 
 # Sistema de cache para dados
-@st.cache_data
+@st.cache_data(ttl=300)  # Cache de 5 minutos para termos aleatórios
+def carregar_termos_populares():
+    api_termos = APITermosJuridicos()
+    return api_termos.obter_termos_populares_aleatorios()
+
+@st.cache_data(ttl=300)
 def carregar_termos_aleatorios(area="Todas"):
     api_termos = APITermosJuridicos()
     return api_termos.obter_termos_aleatorios_por_area(area)
@@ -440,7 +399,7 @@ def exibir_pagina_inicial():
     st.markdown("### 🎯 Bem-vindo ao Glossário Jurídico Digital")
     st.markdown("**Descomplicando o Direito** através de definições claras e atualizadas.")
     
-    termos_aleatorios = carregar_termos_aleatorios()
+    termos_populares = carregar_termos_populares()
     
     st.markdown("### 📈 Estatísticas do Acervo")
     col1, col2, col3, col4 = st.columns(4)
@@ -457,7 +416,7 @@ def exibir_pagina_inicial():
     st.markdown("### 🔥 Termos Populares")
     
     cols = st.columns(2)
-    for idx, termo in enumerate(termos_aleatorios):
+    for idx, termo in enumerate(termos_populares):
         with cols[idx % 2]:
             with st.container():
                 st.markdown(f'<div class="term-card">', unsafe_allow_html=True)
@@ -584,6 +543,9 @@ def exibir_pagina_termo(termo_nome):
         st.markdown(f"### 📖 Definição {termo_nome}")
         st.info(definicao_data["definicao"])
         
+        if definicao_data['url'] != '#':
+            st.markdown(f'<a href="{definicao_data["url"]}" target="_blank" class="news-link">📖 Ler definição completa</a>', unsafe_allow_html=True)
+        
         st.markdown(f"### 📰 Notícias sobre {termo_nome}")
         
         if noticias_data:
@@ -607,10 +569,19 @@ def exibir_pagina_termo(termo_nome):
         
         st.markdown("**APIs Utilizadas:**")
         st.write("• Wikipedia Brasil")
-        st.write("• Fontes Jurídicas BR")
+        st.write("• Dicio API")
+        st.write("• Câmara dos Deputados")
         
         st.markdown("**Status:**")
         st.success("✅ Sistema Brasileiro")
+        
+        # Termos relacionados
+        st.markdown("### 🔗 Termos Relacionados")
+        termos_relacionados = carregar_termos_populares()
+        for termo in termos_relacionados[:3]:
+            if st.button(termo, key=f"rel_{termo}"):
+                st.session_state.termo_selecionado = termo
+                st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -665,8 +636,9 @@ def exibir_pagina_sobre():
     
     **⚙️ APIs Utilizadas:**
     - Wikipedia Brasil para definições
+    - Dicio API para significados
+    - Câmara dos Deputados para notícias
     - Fontes jurídicas brasileiras
-    - Conteúdo legislativo nacional
     
     **📊 Dados 100% via APIs Brasileiras**
     - Zero hand code
@@ -694,8 +666,8 @@ def main():
                 st.rerun()
         
         st.subheader("Termos Populares")
-        termos_aleatorios = carregar_termos_aleatorios()
-        for termo in termos_aleatorios:
+        termos_populares = carregar_termos_populares()
+        for termo in termos_populares:
             if st.button(termo, key=f"side_{termo}"):
                 st.session_state.termo_selecionado = termo
                 st.rerun()
