@@ -747,7 +747,13 @@ def main():
     st.markdown('<h1 class="main-header">⚖️ Glossário Jurídico</h1>', unsafe_allow_html=True)
     st.markdown("### Descomplicando o Direito para estudantes e leigos")
     
-    df = carregar_dados_glossario()
+    # Carregar dados com tratamento de erro
+    try:
+        df = carregar_dados_glossario()
+    except Exception as e:
+        st.error(f"Erro ao carregar dados: {e}")
+        # Criar DataFrame vazio como fallback
+        df = pd.DataFrame(columns=['termo', 'definicao', 'area', 'fonte', 'data', 'exemplo', 'sinonimos', 'relacionados', 'detalhes'])
     
     # Sidebar
     with st.sidebar:
@@ -758,19 +764,22 @@ def main():
         termo_busca = st.text_input("Digite o termo jurídico:")
         
         st.subheader("Filtros")
-        area_selecionada = st.selectbox("Área do Direito", ["Todas"] + list(df['area'].unique()))
+        area_selecionada = st.selectbox("Área do Direito", ["Todas"] + list(df['area'].unique()) if not df.empty else ["Todas"])
         
         st.subheader("Termos Populares")
-        for termo in df['termo'].head(6):
-            if st.button(termo, key=f"side_{termo}"):
-                st.session_state.termo_selecionado = termo
-                st.rerun()
+        if not df.empty:
+            for termo in df['termo'].head(6):
+                if st.button(termo, key=f"side_{termo}"):
+                    st.session_state.termo_selecionado = termo
+                    st.rerun()
+        else:
+            st.write("Nenhum termo disponível")
         
         st.markdown("---")
-        st.metric("Total de Termos", len(df))
+        st.metric("Total de Termos", len(df) if not df.empty else 0)
     
     # Rotas
-    if st.session_state.termo_selecionado:
+    if st.session_state.termo_selecionado and not df.empty:
         exibir_pagina_termo(df, st.session_state.termo_selecionado)
     else:
         tab1, tab2, tab3, tab4 = st.tabs(["🏠 Início", "📚 Explorar", "📰 Notícias", "ℹ️ Sobre"])
