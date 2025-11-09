@@ -860,6 +860,5 @@ def main():
             exibir_pagina_noticias()
         with tab4:
             exibir_pagina_sobre()
-
-if __name__ == "__streamlit_app__":
-    main()
+            
+main()
