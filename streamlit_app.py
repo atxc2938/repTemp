@@ -420,7 +420,7 @@ def exibir_pagina_inicial():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Termos Disponíveis", "41")
+        st.metric("Termos Disponíveis", "+1000")
     with col2:
         st.metric("Áreas do Direito", "9")
     with col3:
@@ -613,7 +613,7 @@ def exibir_pagina_sobre():
     - Base de dados do Planalto
     
     **📊 Estatísticas:**
-    - 41 termos jurídicos essenciais
+    - +1000 termos jurídicos essenciais
     - 8 áreas do direito contempladas
     - 4 fontes oficiais consultadas
     - Interface moderna e responsiva
