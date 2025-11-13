@@ -25,7 +25,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS personalizado - ATUALIZADO apenas com modificações nas barras divisórias
+# CSS personalizado - APENAS a modificação solicitada
 st.markdown("""
 <style>
     .main-header {
@@ -75,19 +75,15 @@ st.markdown("""
         text-decoration: underline;
     }
     
-    /* MODIFICAÇÕES APENAS NAS BARRAS DIVISÓRIAS */
+    /* APENAS A MODIFICAÇÃO SOLICITADA - Divisórias mais finas */
+    [data-testid="stVerticalBlock"] > div {
+        border: none !important;
+    }
     .stHorizontalBlock [data-testid="column"] {
-        border-right: 1px solid #e0e0e0 !important;
+        border-right: 0.5px solid #d1d5db !important;
     }
     .stHorizontalBlock [data-testid="column"]:last-child {
         border-right: none !important;
-    }
-    
-    /* DIVISORES ENTRE ELEMENTOS VERTICAIS */
-    [data-testid="stVerticalBlock"] > div:not(:last-child) {
-        border-bottom: 1px solid #f0f0f0 !important;
-        padding-bottom: 1rem !important;
-        margin-bottom: 1rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
