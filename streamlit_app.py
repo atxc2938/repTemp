@@ -75,15 +75,11 @@ st.markdown("""
         text-decoration: underline;
     }
     
-    /* APENAS A MODIFICAÇÃO SOLICITADA - Divisórias mais finas */
-    [data-testid="stVerticalBlock"] > div {
-        border: none !important;
-    }
-    .stHorizontalBlock [data-testid="column"] {
-        border-right: 0.5px solid #d1d5db !important;
-    }
-    .stHorizontalBlock [data-testid="column"]:last-child {
-        border-right: none !important;
+    /* APENAS A MODIFICAÇÃO SOLICITADA - Retângulos brancos entre elementos mais finos */
+    [data-testid="stVerticalBlock"] > div:not([style*="flex"]) {
+        border-bottom: 0.5px solid #f0f0f0 !important;
+        padding-bottom: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
