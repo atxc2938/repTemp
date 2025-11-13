@@ -25,7 +25,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS personalizado - APENAS a modificação solicitada
+# CSS personalizado - REMOVIDAS as divisórias extras
 st.markdown("""
 <style>
     .main-header {
@@ -74,13 +74,6 @@ st.markdown("""
     .news-link:hover {
         text-decoration: underline;
     }
-    
-    /* APENAS A MODIFICAÇÃO SOLICITADA - Retângulos brancos entre elementos mais finos */
-    [data-testid="stVerticalBlock"] > div:not([style*="flex"]) {
-        border-bottom: 0.5px solid #f0f0f0 !important;
-        padding-bottom: 0.5rem !important;
-        margin-bottom: 0.5rem !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -115,8 +108,8 @@ class BuscadorDefinicoes:
                         "fonte": "Wikipedia",
                         "url": data.get('content_urls', {}).get('desktop', {}).get('page', '#')
                     }
-        except Exception as e:
-            st.error(f"Erro Wikipedia: {e}")
+        except Exception:
+            pass
         return None
 
     def buscar_wikipedia_pesquisa(self, termo):
@@ -133,8 +126,8 @@ class BuscadorDefinicoes:
                     # Busca o primeiro resultado
                     primeiro = results[0]['title']
                     return self.buscar_wikipedia_direto(primeiro)
-        except Exception as e:
-            st.error(f"Erro pesquisa Wikipedia: {e}")
+        except Exception:
+            pass
         return None
 
     def buscar_dicio_api(self, termo):
@@ -155,8 +148,8 @@ class BuscadorDefinicoes:
                                 "fonte": "Dicio",
                                 "url": f"https://dicio.com.br/{urllib.parse.quote(termo.lower())}/"
                             }
-        except Exception as e:
-            st.error(f"Erro Dicio: {e}")
+        except Exception:
+            pass
         return None
 
     def buscar_significado_api(self, termo):
@@ -175,8 +168,8 @@ class BuscadorDefinicoes:
                             "fonte": "Significado",
                             "url": "#"
                         }
-        except Exception as e:
-            st.error(f"Erro Significado: {e}")
+        except Exception:
+            pass
         return None
 
     def buscar_definicao(self, termo):
@@ -214,7 +207,7 @@ class BuscadorNoticias:
                 if termo.lower() in content.lower():
                     noticias.extend(self._gerar_noticias_simuladas(termo))
                     
-        except Exception as e:
+        except Exception:
             # Se der erro, gera notícias simuladas
             noticias.extend(self._gerar_noticias_simuladas(termo))
             
@@ -634,7 +627,6 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.image("https://cdn.pixabay.com/photo/2017/01/31/14/26/law-2024670_1280.png", width=80)
         st.title("🔍 Navegação")
         
         st.subheader("Buscar Termo")
