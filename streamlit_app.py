@@ -37,12 +37,12 @@ st.markdown("""
     }
     .term-card {
         background: #ffffff;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        border-left: 5px solid #1f3a60;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 3px solid #1f3a60;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
     }
     .news-card {
         background: #e8f4fd;
