@@ -171,7 +171,7 @@ class BuscadorDefinicoes:
                 data = response.json()
                 if data and isinstance(data, list) and len(data) > 0:
                     significado = data[0].get('significados', [])
-                    if significado and len(significados) > 0:
+                    if significado and len(significado) > 0:
                         definicao = significado[0].get('descricao', '')
                         if definicao:
                             return {
@@ -344,7 +344,7 @@ class BuscadorNoticias:
         
         # Se não encontrou notícias, gera algumas simuladas
         if not noticias:
-            noticias.extend(self._gerar_noticias_simuladas(termo)
+            noticias.extend(self._gerar_noticias_simuladas(termo))
         
         # Remove duplicatas
         noticias_unicas = []
