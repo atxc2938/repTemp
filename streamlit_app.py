@@ -25,7 +25,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS personalizado - ATUALIZADO com divisores estilizados
+# CSS personalizado - ATUALIZADO apenas com modificações nas barras divisórias
 st.markdown("""
 <style>
     .main-header {
@@ -75,35 +75,19 @@ st.markdown("""
         text-decoration: underline;
     }
     
-    /* DIVISORES ESTILIZADOS - ATUALIZADO */
-    .divisor-sutil {
-        border: none;
-        height: 1px;
-        background: linear-gradient(90deg, transparent 0%, #e0e0e0 50%, transparent 100%);
-        margin: 1.5rem 0;
+    /* MODIFICAÇÕES APENAS NAS BARRAS DIVISÓRIAS */
+    .stHorizontalBlock [data-testid="column"] {
+        border-right: 1px solid #e0e0e0 !important;
     }
-    .divisor-card {
-        border: none;
-        height: 1px;
-        background-color: #f0f0f0;
-        margin: 1rem 0;
-    }
-    .divisor-section {
-        border: none;
-        height: 2px;
-        background: linear-gradient(90deg, transparent 0%, #1f3a60 50%, transparent 100%);
-        margin: 2rem 0;
+    .stHorizontalBlock [data-testid="column"]:last-child {
+        border-right: none !important;
     }
     
-    /* REMOVER BORDAS BRANCAS PADRÃO */
-    .stApp {
-        background-color: #f8f9fa;
-    }
-    .main .block-container {
-        padding-top: 2rem;
-    }
-    div[data-testid="stVerticalBlock"] > div {
-        border: none !important;
+    /* DIVISORES ENTRE ELEMENTOS VERTICAIS */
+    [data-testid="stVerticalBlock"] > div:not(:last-child) {
+        border-bottom: 1px solid #f0f0f0 !important;
+        padding-bottom: 1rem !important;
+        margin-bottom: 1rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -459,8 +443,6 @@ def exibir_pagina_inicial():
     with col4:
         st.metric("Atualização", "Contínua")
     
-    st.markdown('<hr class="divisor-section">', unsafe_allow_html=True)
-    
     st.markdown("### 🔥 Termos Populares")
     
     cols = st.columns(2)
@@ -499,8 +481,6 @@ def exibir_explorar_termos():
             st.session_state.area_filtro = area_filtro
             st.session_state.termo_buscado = None
     
-    st.markdown('<hr class="divisor-sutil">', unsafe_allow_html=True)
-    
     # Exibir resultados da busca ou termos populares
     if st.session_state.termo_buscado:
         termo = st.session_state.termo_buscado
@@ -516,8 +496,6 @@ def exibir_explorar_termos():
             st.caption(f"Fonte: {resultado['definicao']['fonte']}")
         else:
             st.warning("Não foi possível encontrar uma definição para este termo.")
-        
-        st.markdown('<hr class="divisor-card">', unsafe_allow_html=True)
         
         # Exibir notícias
         st.markdown(f"### 📰 Notícias sobre {termo}")
@@ -572,7 +550,7 @@ def exibir_pagina_termo(termo_nome):
             st.session_state.termo_selecionado = None
             st.rerun()
     
-    st.markdown('<hr class="divisor-section">', unsafe_allow_html=True)
+    st.markdown("---")
     
     # Definição
     if resultado["definicao"]:
@@ -581,8 +559,6 @@ def exibir_pagina_termo(termo_nome):
         st.caption(f"Fonte: {resultado['definicao']['fonte']}")
     else:
         st.warning("Definição não encontrada")
-    
-    st.markdown('<hr class="divisor-card">', unsafe_allow_html=True)
     
     # Notícias
     st.markdown(f"### 📰 Notícias")
@@ -607,8 +583,6 @@ def exibir_pagina_noticias():
     with st.form("noticias_busca"):
         termo_noticias = st.text_input("🔍 Buscar notícias sobre:", placeholder="Digite um termo jurídico")
         buscar = st.form_submit_button("🔍 Buscar Notícias")
-    
-    st.markdown('<hr class="divisor-sutil">', unsafe_allow_html=True)
     
     if termo_noticias and buscar:
         with st.spinner("Buscando notícias..."):
@@ -679,8 +653,6 @@ def main():
                     st.session_state.termo_selecionado = termo_busca
                     st.rerun()
         
-        st.markdown('<hr class="divisor-sutil">', unsafe_allow_html=True)
-        
         st.subheader("Termos Populares")
         termos = carregar_termos_populares()
         for termo in termos:
@@ -688,7 +660,7 @@ def main():
                 st.session_state.termo_selecionado = termo
                 st.rerun()
         
-        st.markdown('<hr class="divisor-section">', unsafe_allow_html=True)
+        st.markdown("---")
         st.metric("Status", "✅ Online")
 
     # Rotas principais
