@@ -28,407 +28,51 @@ st.set_page_config(
 # CSS personalizado - MANTIDO
 st.markdown("""
 <style>
-    /* Paleta de cores moderna - Tons escuros de cinza, azul e preto */
-    :root {
-        --preto-profundo: #0A0A0A;
-        --preto-card: #111111;
-        --cinza-escuro: #1A1A1A;
-        --cinza-medio: #2D2D2D;
-        --cinza-claro: #404040;
-        --azul-escuro: #0F1A2C;
-        --azul-medio: #1E2B45;
-        --azul-destaque: #2563EB;
-        --azul-claro: #3B82F6;
-        --azul-neon: #00D4FF;
-        --branco: #FFFFFF;
-        --branco-fumaca: #F8FAFC;
-        --cinza-texto: #94A3B8;
-    }
-    
-    /* Reset e estilos base */
-    .main {
-        background: linear-gradient(135deg, var(--preto-profundo) 0%, var(--azul-escuro) 100%);
-        color: var(--branco-fumaca);
-        min-height: 100vh;
-    }
-    
-    .stApp {
-        background: linear-gradient(135deg, var(--preto-profundo) 0%, var(--azul-escuro) 100%);
-        background-attachment: fixed;
-    }
-    
-    /* Tipografia moderna */
     .main-header {
-        font-size: 3.5rem;
-        background: linear-gradient(135deg, var(--branco-fumaca) 0%, var(--azul-neon) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        font-size: 2.5rem;
+        color: #1f3a60;
         text-align: center;
-        margin-bottom: 0.5rem;
+        margin-bottom: 1rem;
         font-weight: 800;
-        font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
-        letter-spacing: -0.02em;
-        text-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
     }
-    
-    .subheader {
-        font-size: 1.4rem;
-        color: var(--cinza-texto);
-        text-align: center;
-        margin-bottom: 3rem;
-        font-weight: 400;
-        font-family: 'Inter', system-ui, sans-serif;
-        letter-spacing: 0.02em;
-        opacity: 0.9;
-    }
-    
-    /* Cards modernos com efeito glassmorphism */
     .term-card {
-        background: rgba(17, 17, 17, 0.8);
-        backdrop-filter: blur(20px);
-        border-radius: 20px;
-        padding: 28px;
-        margin-bottom: 24px;
-        border: 1px solid rgba(59, 130, 246, 0.15);
-        box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .term-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
-        transition: left 0.6s ease;
-    }
-    
-    .term-card:hover::before {
-        left: 100%;
-    }
-    
-    .term-card:hover {
-        transform: translateY(-8px);
-        border-color: rgba(59, 130, 246, 0.4);
-        box-shadow: 
-            0 20px 40px rgba(0, 0, 0, 0.6),
-            0 0 0 1px rgba(59, 130, 246, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    }
-    
-    .news-card {
-        background: rgba(17, 17, 17, 0.7);
-        backdrop-filter: blur(15px);
-        border-radius: 16px;
-        padding: 24px;
-        margin-bottom: 20px;
-        border: 1px solid rgba(30, 43, 69, 0.3);
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-        transition: all 0.3s ease;
-    }
-    
-    .news-card:hover {
-        transform: translateX(8px);
-        border-color: rgba(59, 130, 246, 0.3);
-        box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.4),
-            0 0 0 1px rgba(59, 130, 246, 0.1);
-    }
-    
-    .definition-card {
-        background: rgba(17, 17, 17, 0.85);
-        backdrop-filter: blur(25px);
-        border-radius: 24px;
-        padding: 32px;
-        margin-bottom: 32px;
-        border: 1px solid rgba(59, 130, 246, 0.2);
-        box-shadow: 
-            0 20px 60px rgba(0, 0, 0, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-    
-    /* Botões modernos */
-    .stButton button {
-        background: linear-gradient(135deg, var(--azul-destaque) 0%, var(--azul-claro) 100%);
-        color: var(--branco);
-        border: none;
+        background: #ffffff;
         border-radius: 12px;
-        padding: 12px 24px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-left: 5px solid #1f3a60;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #e9ecef;
+    }
+    .news-card {
+        background: #e8f4fd;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+        border-left: 4px solid #17a2b8;
+    }
+    .definition-card {
+        background: #f0f7ff;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        border: 2px solid #1f3a60;
+    }
+    .stButton button {
+        background: #1f3a60;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
         font-weight: 600;
-        font-family: 'Inter', system-ui, sans-serif;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 
-            0 4px 16px rgba(37, 99, 235, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        position: relative;
-        overflow: hidden;
     }
-    
-    .stButton button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s ease;
-    }
-    
-    .stButton button:hover::before {
-        left: 100%;
-    }
-    
-    .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 
-            0 8px 25px rgba(37, 99, 235, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        background: linear-gradient(135deg, var(--azul-claro) 0%, var(--azul-destaque) 100%);
-    }
-    
-    /* Links estilizados */
     .news-link {
-        color: var(--azul-claro);
+        color: #1f3a60;
         text-decoration: none;
         font-weight: 600;
-        font-family: 'Inter', system-ui, sans-serif;
-        transition: all 0.3s ease;
-        border-bottom: 2px solid transparent;
-        padding-bottom: 2px;
     }
-    
     .news-link:hover {
-        color: var(--azul-neon);
-        border-bottom: 2px solid var(--azul-neon);
-    }
-    
-    /* Sidebar moderna */
-    .css-1d391kg {
-        background: linear-gradient(180deg, var(--preto-card) 0%, var(--cinza-escuro) 100%) !important;
-        border-right: 1px solid var(--cinza-medio);
-    }
-    
-    .sidebar .sidebar-content {
-        background: linear-gradient(180deg, var(--preto-card) 0%, var(--cinza-escuro) 100%);
-    }
-    
-    /* Tabs modernas */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
-        background: rgba(17, 17, 17, 0.6);
-        backdrop-filter: blur(10px);
-        border-radius: 16px;
-        padding: 8px;
-        border: 1px solid var(--cinza-medio);
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        background: transparent;
-        border-radius: 12px;
-        padding: 12px 24px;
-        border: none;
-        color: var(--cinza-texto);
-        font-weight: 500;
-        font-family: 'Inter', system-ui, sans-serif;
-        transition: all 0.3s ease;
-        margin: 0 2px;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, var(--azul-medio) 0%, var(--azul-destaque) 100%) !important;
-        color: var(--branco) !important;
-        font-weight: 600;
-        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
-    }
-    
-    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]):hover {
-        background: rgba(59, 130, 246, 0.1);
-        color: var(--azul-claro);
-    }
-    
-    /* Métricas estilizadas */
-    [data-testid="stMetricValue"] {
-        color: var(--branco-fumaca) !important;
-        font-size: 2rem !important;
-        font-weight: 700;
-        font-family: 'Inter', system-ui, sans-serif;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    }
-    
-    [data-testid="stMetricLabel"] {
-        color: var(--cinza-texto) !important;
-        font-size: 0.9rem !important;
-        font-weight: 500;
-        font-family: 'Inter', system-ui, sans-serif;
-        opacity: 0.8;
-    }
-    
-    [data-testid="stMetricDelta"] {
-        font-family: 'Inter', system-ui, sans-serif;
-    }
-    
-    /* Inputs modernos */
-    .stTextInput input {
-        background: rgba(17, 17, 17, 0.8) !important;
-        border: 1px solid var(--cinza-claro) !important;
-        border-radius: 12px !important;
-        color: var(--branco-fumaca) !important;
-        padding: 14px 16px !important;
-        font-family: 'Inter', system-ui, sans-serif;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(10px);
-    }
-    
-    .stTextInput input:focus {
-        border-color: var(--azul-claro) !important;
-        box-shadow: 
-            0 0 0 3px rgba(59, 130, 246, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
-        background: rgba(17, 17, 17, 0.9) !important;
-    }
-    
-    .stTextInput input::placeholder {
-        color: var(--cinza-texto);
-        opacity: 0.6;
-    }
-    
-    /* Selectbox moderno */
-    .stSelectbox div[data-baseweb="select"] {
-        background: rgba(17, 17, 17, 0.8) !important;
-        border: 1px solid var(--cinza-claro) !important;
-        border-radius: 12px !important;
-        color: var(--branco-fumaca) !important;
-        backdrop-filter: blur(10px);
-    }
-    
-    .stSelectbox div[data-baseweb="select"]:hover {
-        border-color: var(--azul-claro) !important;
-    }
-    
-    /* Spinner personalizado */
-    .stSpinner > div {
-        border-color: var(--azul-claro) transparent transparent transparent !important;
-    }
-    
-    /* Alertas e info boxes */
-    .stAlert {
-        background: rgba(30, 43, 69, 0.3) !important;
-        border: 1px solid rgba(59, 130, 246, 0.2) !important;
-        border-radius: 16px !important;
-        color: var(--azul-claro) !important;
-        backdrop-filter: blur(10px);
-        font-family: 'Inter', system-ui, sans-serif;
-    }
-    
-    .stAlert [data-testid="stMarkdownContainer"] {
-        color: var(--azul-claro) !important;
-    }
-    
-    /* Cores de texto */
-    h1, h2, h3, h4, h5, h6 {
-        color: var(--branco-fumaca) !important;
-        font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
-        font-weight: 600;
-    }
-    
-    h1 {
-        background: linear-gradient(135deg, var(--branco-fumaca) 0%, var(--azul-claro) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    
-    h2, h3, h4 {
-        color: var(--branco-fumaca) !important;
-    }
-    
-    p, div, span {
-        color: var(--cinza-texto) !important;
-        font-family: 'Inter', system-ui, sans-serif;
-        line-height: 1.6;
-    }
-    
-    strong {
-        color: var(--branco-fumaca) !important;
-    }
-    
-    /* Scrollbar personalizada */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: var(--cinza-escuro);
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, var(--azul-medio) 0%, var(--azul-claro) 100%);
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, var(--azul-claro) 0%, var(--azul-destaque) 100%);
-    }
-    
-    /* Efeitos de foco acessível */
-    *:focus {
-        outline: 2px solid var(--azul-claro);
-        outline-offset: 2px;
-    }
-    
-    /* Animações sutis */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .term-card, .news-card, .definition-card {
-        animation: fadeInUp 0.6s ease-out;
-    }
-    
-    /* Container principal */
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    
-    /* Efeitos de brilho sutil */
-    .glow-effect {
-        position: relative;
-    }
-    
-    .glow-effect::after {
-        content: '';
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        background: linear-gradient(45deg, var(--azul-claro), var(--azul-neon), var(--azul-claro));
-        border-radius: inherit;
-        z-index: -1;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .glow-effect:hover::after {
-        opacity: 0.3;
+        text-decoration: underline;
     }
 </style>
 """, unsafe_allow_html=True)
