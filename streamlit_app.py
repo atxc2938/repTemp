@@ -192,11 +192,16 @@ class BuscadorDefinicoes:
 # Classe para buscar notícias - BUSCA EM SITES GRANDES
 class BuscadorNoticias:
     def buscar_portais_juridicos(self, termo):
-        """Busca em portais jurídicos brasileiros - ORDEM: Jusbrasil, G1, Migalhas, Consultor Jurídico"""
+        """Busca em portais jurídicos brasileiros - ORDEM: Consultor Jurídico, Jusbrasil, G1, Migalhas"""
         noticias = []
         portais = [
             {
-                "nome": "Jusbrasil", 
+                "nome": "Consultor Jurídico", 
+                "url": f"https://www.conjur.com.br/pesquisa/?q={urllib.parse.quote(termo)}",
+                "base": "https://www.conjur.com.br"
+            },
+            {
+                "nome": "Jusbrasil",
                 "url": f"https://jusbrasil.com.br/busca?q={urllib.parse.quote(termo)}",
                 "base": "https://jusbrasil.com.br"
             },
@@ -209,11 +214,6 @@ class BuscadorNoticias:
                 "nome": "Migalhas",
                 "url": f"https://www.migalhas.com.br/busca?q={urllib.parse.quote(termo)}",
                 "base": "https://www.migalhas.com.br"
-            },
-            {
-                "nome": "Consultor Jurídico",
-                "url": f"https://www.conjur.com.br/busca?q={urllib.parse.quote(termo)}",
-                "base": "https://www.conjur.com.br"
             }
         ]
         
@@ -232,8 +232,12 @@ class BuscadorNoticias:
         """Gera notícias simuladas baseadas no termo - APENAS 1 POR FONTE"""
         noticias = []
         
-        # Apenas uma notícia por fonte
+        # Apenas uma notícia por fonte - ORDEM: Consultor Jurídico primeiro
         fontes_noticias = [
+            {
+                "nome": "Consultor Jurídico",
+                "url": f"https://www.conjur.com.br/pesquisa/?q={urllib.parse.quote(termo)}"
+            },
             {
                 "nome": "Jusbrasil",
                 "url": f"https://jusbrasil.com.br/busca?q={urllib.parse.quote(termo)}"
@@ -245,10 +249,6 @@ class BuscadorNoticias:
             {
                 "nome": "Migalhas",
                 "url": f"https://www.migalhas.com.br/busca?q={urllib.parse.quote(termo)}"
-            },
-            {
-                "nome": "Consultor Jurídico",
-                "url": f"https://www.conjur.com.br/busca?q={urllib.parse.quote(termo)}"
             }
         ]
         
@@ -294,14 +294,14 @@ class BuscadorNoticias:
                 url = noticia['url']
                 
                 # Verifica se a URL é compatível com a fonte
-                if fonte == "Jusbrasil" and "jusbrasil.com.br" not in url:
+                if fonte == "Consultor Jurídico" and "conjur.com.br/pesquisa" not in url:
+                    noticia['url'] = f"https://www.conjur.com.br/pesquisa/?q={urllib.parse.quote(termo)}"
+                elif fonte == "Jusbrasil" and "jusbrasil.com.br" not in url:
                     noticia['url'] = f"https://jusbrasil.com.br/busca?q={urllib.parse.quote(termo)}"
                 elif fonte == "G1" and "g1.globo.com" not in url:
                     noticia['url'] = f"https://g1.globo.com/busca/?q={urllib.parse.quote(termo)}"
                 elif fonte == "Migalhas" and "migalhas.com.br" not in url:
                     noticia['url'] = f"https://www.migalhas.com.br/busca?q={urllib.parse.quote(termo)}"
-                elif fonte == "Consultor Jurídico" and "conjur.com.br" not in url:
-                    noticia['url'] = f"https://www.conjur.com.br/busca?q={urllib.parse.quote(termo)}"
                 
                 noticias_unicas.append(noticia)
                 fontes_vistas.add(noticia['fonte'])
@@ -588,16 +588,21 @@ def exibir_pagina_sobre():
     - Streamlit para interface web
     - Python como linguagem principal
     
-    **📞 Fontes Oficiais:**
-    - STF (Supremo Tribunal Federal)
-    - STJ (Superior Tribunal de Justiça)
-    - Câmara dos Deputados
-    - Base de dados do Planalto
+    **📰 Fontes de Notícias:**
+    - Consultor Jurídico
+    - Jusbrasil
+    - G1
+    - Migalhas
+    
+    **📚 Fontes de Definições:**
+    - Wikipedia
+    - Dicio
+    - Significado
     
     **📊 Estatísticas:**
     - +1000 termos jurídicos essenciais
     - 9 áreas do direito contempladas
-    - 4 fontes oficiais consultadas
+    - 7 fontes consultadas
     - Interface moderna e responsiva
     - Notícias atualizadas para todos os termos
     """)
